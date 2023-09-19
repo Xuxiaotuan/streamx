@@ -25,9 +25,9 @@ import org.apache.streampark.common.enums.ExecutionMode;
 import org.apache.streampark.common.enums.ResolveOrder;
 import org.apache.streampark.common.enums.RestoreMode;
 import org.apache.streampark.common.fs.FsOperator;
-import org.apache.streampark.common.tuple.Tuple2;
 import org.apache.streampark.common.util.CompletableFutureUtils;
 import org.apache.streampark.common.util.DeflaterUtils;
+import org.apache.streampark.common.util.ExceptionUtils;
 import org.apache.streampark.common.util.HadoopUtils;
 import org.apache.streampark.common.util.PropertiesUtils;
 import org.apache.streampark.common.util.ThreadUtils;
@@ -82,6 +82,7 @@ import org.apache.streampark.flink.packer.pipeline.ShadedBuildResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.JobID;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.CoreOptions;
 import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.MemorySize;
@@ -360,7 +361,7 @@ public class ApplicationActionServiceImpl extends ServiceImpl<ApplicationMapper,
                   FlinkAppHttpWatcher.unWatching(application.getId());
                 }
 
-                String exception = Utils.stringifyException(e);
+                String exception = ExceptionUtils.stringifyException(e);
                 applicationLog.setException(exception);
                 applicationLog.setSuccess(false);
               }
@@ -520,7 +521,7 @@ public class ApplicationActionServiceImpl extends ServiceImpl<ApplicationMapper,
               if (e.getCause() instanceof CancellationException) {
                 updateToStopped(application);
               } else {
-                String exception = Utils.stringifyException(e);
+                String exception = ExceptionUtils.stringifyException(e);
                 applicationLog.setException(exception);
                 applicationLog.setSuccess(false);
                 Application app = getById(appParam.getId());
