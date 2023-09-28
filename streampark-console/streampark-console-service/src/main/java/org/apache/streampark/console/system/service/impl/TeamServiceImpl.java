@@ -19,7 +19,7 @@ package org.apache.streampark.console.system.service.impl;
 
 import org.apache.streampark.console.base.domain.RestRequest;
 import org.apache.streampark.console.base.exception.ApiAlertException;
-import org.apache.streampark.console.core.enums.UserType;
+import org.apache.streampark.console.core.enums.UserTypeEnum;
 import org.apache.streampark.console.core.service.CommonService;
 import org.apache.streampark.console.core.service.ProjectService;
 import org.apache.streampark.console.core.service.VariableService;
@@ -95,25 +95,23 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
   public void deleteTeam(Long teamId) {
     log.info("{} Proceed delete team[Id={}]", commonService.getCurrentUser().getUsername(), teamId);
     Team team = this.getById(teamId);
-    // TODO The AssertUtils.checkApiAlert can simplify the exception.
-    if (team == null) {
-      throw new ApiAlertException(String.format("The team[Id=%s] doesn't exists.", teamId));
-    }
-    if (applicationInfoService.existsByTeamId(teamId)) {
-      throw new ApiAlertException(
-          String.format(
-              "Please delete the applications under the team[name=%s] first!", team.getTeamName()));
-    }
-    if (projectService.existsByTeamId(teamId)) {
-      throw new ApiAlertException(
-          String.format(
-              "Please delete the projects under the team[name=%s] first!", team.getTeamName()));
-    }
-    if (variableService.existsByTeamId(teamId)) {
-      throw new ApiAlertException(
-          String.format(
-              "Please delete the variables under the team[name=%s] first!", team.getTeamName()));
-    }
+
+    ApiAlertException.throwIfNull(team, String.format("The team[Id=%s] doesn't exist.", teamId));
+
+    ApiAlertException.throwIfTrue(
+        applicationInfoService.existsByTeamId(teamId),
+        String.format(
+            "Please delete the applications under the team[name=%s] first!", team.getTeamName()));
+
+    ApiAlertException.throwIfTrue(
+        projectService.existsByTeamId(teamId),
+        String.format(
+            "Please delete the projects under the team[name=%s] first!", team.getTeamName()));
+
+    ApiAlertException.throwIfTrue(
+        variableService.existsByTeamId(teamId),
+        String.format(
+            "Please delete the variables under the team[name=%s] first!", team.getTeamName()));
 
     memberService.deleteByTeamId(teamId);
     userService.clearLastTeam(teamId);
@@ -143,7 +141,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team> implements Te
             .orElseThrow(
                 () -> new ApiAlertException(String.format("The userId [%s] not found.", userId)));
     // Admin has the permission for all teams.
-    if (UserType.ADMIN == user.getUserType()) {
+    if (UserTypeEnum.ADMIN == user.getUserType()) {
       return this.list();
     }
     return baseMapper.findUserTeams(userId);

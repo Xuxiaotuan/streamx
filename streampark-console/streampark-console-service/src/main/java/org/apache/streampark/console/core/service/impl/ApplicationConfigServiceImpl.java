@@ -25,8 +25,8 @@ import org.apache.streampark.console.base.exception.ApiAlertException;
 import org.apache.streampark.console.base.mybatis.pager.MybatisPager;
 import org.apache.streampark.console.core.entity.Application;
 import org.apache.streampark.console.core.entity.ApplicationConfig;
-import org.apache.streampark.console.core.enums.ConfigFileType;
-import org.apache.streampark.console.core.enums.EffectiveType;
+import org.apache.streampark.console.core.enums.ConfigFileTypeEnum;
+import org.apache.streampark.console.core.enums.EffectiveTypeEnum;
 import org.apache.streampark.console.core.mapper.ApplicationConfigMapper;
 import org.apache.streampark.console.core.service.ApplicationConfigService;
 import org.apache.streampark.console.core.service.EffectiveService;
@@ -64,7 +64,6 @@ public class ApplicationConfigServiceImpl
   @Autowired private EffectiveService effectiveService;
 
   @Override
-  @Transactional(rollbackFor = {Exception.class})
   public synchronized void create(Application application, Boolean latest) {
     String decode = new String(Base64.getDecoder().decode(application.getConfig()));
     String config = DeflaterUtils.zipString(decode.trim());
@@ -73,11 +72,11 @@ public class ApplicationConfigServiceImpl
     applicationConfig.setAppId(application.getId());
 
     if (application.getFormat() != null) {
-      ConfigFileType fileType = ConfigFileType.of(application.getFormat());
-      if (fileType == null || ConfigFileType.UNKNOWN == fileType) {
-        throw new ApiAlertException(
-            "application' config error. must be (.properties|.yaml|.yml |.conf)");
-      }
+      ConfigFileTypeEnum fileType = ConfigFileTypeEnum.of(application.getFormat());
+      ApiAlertException.throwIfTrue(
+          fileType == null || ConfigFileTypeEnum.UNKNOWN == fileType,
+          "application' config error. must be (.properties|.yaml|.yml |.conf)");
+
       applicationConfig.setFormat(fileType.getValue());
     }
 
@@ -89,7 +88,6 @@ public class ApplicationConfigServiceImpl
     this.setLatestOrEffective(latest, applicationConfig.getId(), application.getId());
   }
 
-  @Transactional(rollbackFor = {Exception.class})
   public void setLatest(Long appId, Long configId) {
     LambdaUpdateWrapper<ApplicationConfig> updateWrapper = Wrappers.lambdaUpdate();
     updateWrapper.set(ApplicationConfig::getLatest, false).eq(ApplicationConfig::getAppId, appId);
@@ -101,7 +99,6 @@ public class ApplicationConfigServiceImpl
   }
 
   @Override
-  @Transactional(rollbackFor = {Exception.class})
   public synchronized void update(Application application, Boolean latest) {
     // flink sql job
     ApplicationConfig latestConfig = getLatest(application.getId());
@@ -110,7 +107,7 @@ public class ApplicationConfigServiceImpl
       ApplicationConfig effectiveConfig = getEffective(application.getId());
       if (Utils.isEmpty(application.getConfig())) {
         if (effectiveConfig != null) {
-          effectiveService.delete(application.getId(), EffectiveType.CONFIG);
+          effectiveService.delete(application.getId(), EffectiveTypeEnum.CONFIG);
         }
       } else {
         // there was no configuration before, is a new configuration
@@ -180,7 +177,7 @@ public class ApplicationConfigServiceImpl
     LambdaUpdateWrapper<ApplicationConfig> updateWrapper = Wrappers.lambdaUpdate();
     updateWrapper.eq(ApplicationConfig::getAppId, appId).set(ApplicationConfig::getLatest, false);
     this.update(updateWrapper);
-    effectiveService.saveOrUpdate(appId, EffectiveType.CONFIG, configId);
+    effectiveService.saveOrUpdate(appId, EffectiveTypeEnum.CONFIG, configId);
   }
 
   @Override
@@ -189,7 +186,6 @@ public class ApplicationConfigServiceImpl
   }
 
   @Override
-  @Transactional(rollbackFor = {Exception.class})
   public ApplicationConfig getEffective(Long appId) {
     return baseMapper.getEffective(appId);
   }

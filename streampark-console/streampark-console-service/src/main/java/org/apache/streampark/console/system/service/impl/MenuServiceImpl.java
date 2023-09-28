@@ -21,7 +21,7 @@ import org.apache.streampark.console.base.domain.router.RouterMeta;
 import org.apache.streampark.console.base.domain.router.RouterTree;
 import org.apache.streampark.console.base.domain.router.VueRouter;
 import org.apache.streampark.console.base.util.VueRouterUtils;
-import org.apache.streampark.console.core.enums.UserType;
+import org.apache.streampark.console.core.enums.UserTypeEnum;
 import org.apache.streampark.console.system.entity.Menu;
 import org.apache.streampark.console.system.entity.User;
 import org.apache.streampark.console.system.mapper.MenuMapper;
@@ -66,7 +66,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
                     new IllegalArgumentException(
                         String.format("The userId [%s] not found", userId)));
     // Admin has the permission for all menus.
-    if (UserType.ADMIN == user.getUserType()) {
+    if (UserTypeEnum.ADMIN == user.getUserType()) {
       return this.list().stream().map(Menu::getPerms).collect(Collectors.toList());
     }
     return this.baseMapper.findUserPermissions(userId, teamId);
@@ -81,7 +81,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
                     new IllegalArgumentException(
                         String.format("The userId:[%s] not found", userId)));
     // Admin has the permission for all menus.
-    if (UserType.ADMIN == user.getUserType()) {
+    if (UserTypeEnum.ADMIN == user.getUserType()) {
       LambdaQueryWrapper<Menu> queryWrapper =
           new LambdaQueryWrapper<Menu>().eq(Menu::getType, "0").orderByAsc(Menu::getOrderNum);
       return this.list(queryWrapper);
@@ -126,7 +126,6 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
   }
 
   @Override
-  @Transactional(rollbackFor = Exception.class)
   public void createMenu(Menu menu) {
     menu.setCreateTime(new Date());
     setMenu(menu);
@@ -134,7 +133,6 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
   }
 
   @Override
-  @Transactional(rollbackFor = Exception.class)
   public void updateMenu(Menu menu) throws Exception {
     menu.setModifyTime(new Date());
     setMenu(menu);
@@ -142,7 +140,6 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
   }
 
   @Override
-  @Transactional(rollbackFor = Exception.class)
   public void deleteMenus(String[] menuIds) throws Exception {
     // Find users associated with these menus/buttons
     this.roleMenuServie.deleteByMenuId(menuIds);
