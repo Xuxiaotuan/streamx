@@ -83,7 +83,7 @@ public final class VueRouterUtils {
    * @param <T> T
    * @return ArrayList<VueRouter < T>>
    */
-  public static <T> ArrayList<VueRouter<T>> buildVueRouter(List<VueRouter<T>> routes) {
+  public static <T> List<VueRouter<T>> buildVueRouter(List<VueRouter<T>> routes) {
     if (routes == null) {
       return null;
     }
@@ -110,14 +110,14 @@ public final class VueRouterUtils {
           }
         });
 
-    ArrayList<VueRouter<T>> list = new ArrayList<>();
+    List<VueRouter<T>> routerList = new ArrayList<>();
     VueRouter<T> root = new VueRouter<>();
     root.setName("Root");
     root.setComponent("BasicView");
     root.setPath("/");
     root.setChildren(topRoutes);
-    list.add(root);
+    routerList.add(root);
 
-    return list;
+    return routerList;
   }
 }

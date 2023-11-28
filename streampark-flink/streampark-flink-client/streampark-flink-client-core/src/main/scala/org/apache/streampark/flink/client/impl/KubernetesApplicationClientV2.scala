@@ -17,12 +17,16 @@
 
 package org.apache.streampark.flink.client.impl
 
+import org.apache.streampark.common.Constant
 import org.apache.streampark.common.util.Logger
-import org.apache.streampark.common.zio.ZIOExt.IOOps
+import org.apache.streampark.common.zio.ZIOExt.{IOOps, OptionZIOOps}
 import org.apache.streampark.flink.client.`trait`.KubernetesClientV2Trait
 import org.apache.streampark.flink.client.bean._
 import org.apache.streampark.flink.kubernetes.v2.model.{FlinkDeploymentDef, JobManagerDef, TaskManagerDef}
+import org.apache.streampark.flink.kubernetes.v2.model.TrackKey.ApplicationJobKey
+import org.apache.streampark.flink.kubernetes.v2.observer.FlinkK8sObserver
 import org.apache.streampark.flink.kubernetes.v2.operator.FlinkK8sOperator
+import org.apache.streampark.flink.kubernetes.v2.operator.OprError.{FlinkResourceNotFound, UnsupportedAction}
 import org.apache.streampark.flink.packer.pipeline.K8sAppModeBuildResponse
 
 import org.apache.commons.lang3.StringUtils
@@ -31,6 +35,7 @@ import org.apache.flink.configuration._
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions
 import org.apache.flink.runtime.jobgraph.SavepointConfigOptions
 import org.apache.flink.v1beta1.FlinkDeploymentSpec.FlinkVersion
+import zio.ZIO
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.mapAsScalaMapConverter
@@ -76,7 +81,7 @@ object KubernetesApplicationClientV2 extends KubernetesClientV2Trait with Logger
     )
   }
 
-  // Generate FlinkDeployment CR definition, it is a pure effect function.
+  /** Generate FlinkDeployment CR definition, it is a pure effect function. */
   private def genFlinkDeployDef(
       submitReq: SubmitRequest,
       originFlinkConfig: Configuration,
@@ -86,7 +91,7 @@ object KubernetesApplicationClientV2 extends KubernetesClientV2Trait with Logger
     val flinkConfMap = originFlinkConfig.toMap.asScala.toMap
 
     val namespace = Option(submitReq.k8sSubmitParam.kubernetesNamespace)
-      .getOrElse("default")
+      .getOrElse(Constant.DEFAULT)
 
     val name = submitReq.k8sSubmitParam.kubernetesName
       .orElse(Option(submitReq.k8sSubmitParam.clusterId))
@@ -239,6 +244,32 @@ object KubernetesApplicationClientV2 extends KubernetesClientV2Trait with Logger
         extJarPaths = Array.empty,
         ingress = ingress
       ))
+  }
+
+  /** Shutdown Flink Application deployment. */
+  @throws[Throwable]
+  def shutdown(shutDownRequest: ShutDownRequest): ShutDownResponse = {
+    val name = shutDownRequest.clusterId
+    val namespace = shutDownRequest.kubernetesDeployParam.kubernetesNamespace
+    def richMsg: String => String = s"[flink-shutdown][clusterId=$name][namespace=$namespace] " + _
+
+    FlinkK8sObserver.trackedKeys
+      .find {
+        case ApplicationJobKey(_, ns, n) => ns == namespace && n == name
+        case _ => false
+      }
+      .someOrUnitZIO(key => FlinkK8sOperator.delete(key.id))
+      .catchSome {
+        case _: FlinkResourceNotFound => ZIO.unit
+        case _: UnsupportedAction => ZIO.unit
+      }
+      .as(ShutDownResponse(name))
+      .runIOAsTry match {
+      case Success(result) =>
+        logInfo(richMsg("Shutdown Flink Application deployment successfully.")); result
+      case Failure(err) =>
+        logError(richMsg(s"Fail to shutdown Flink Application deployment"), err); throw err
+    }
   }
 
 }

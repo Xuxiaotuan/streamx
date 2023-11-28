@@ -16,6 +16,7 @@
  */
 package org.apache.streampark.common.util
 
+import org.apache.streampark.common.Constant
 import org.apache.streampark.common.conf.{CommonConfig, InternalConfigHolder}
 
 import org.apache.commons.lang3.StringUtils
@@ -46,7 +47,7 @@ object YarnUtils extends Logger {
   lazy val PROXY_YARN_URL = InternalConfigHolder.get[String](CommonConfig.STREAMPARK_PROXY_YARN_URL)
 
   /**
-   * hadoop.http.authentication.type<br> get yarn http authentication mode.<br> ex: sample, kerberos
+   * hadoop.http.authentication.type<br> get yarn http authentication mode.<br> ex: simple, kerberos
    *
    * @return
    */
@@ -55,9 +56,9 @@ object YarnUtils extends Logger {
     "kerberos".equalsIgnoreCase(yarnHttpAuth)
   }
 
-  lazy val hasYarnHttpSampleAuth: Boolean = {
+  lazy val hasYarnHttpSimpleAuth: Boolean = {
     val yarnHttpAuth: String = InternalConfigHolder.get[String](CommonConfig.STREAMPARK_YARN_AUTH)
-    "sample".equalsIgnoreCase(yarnHttpAuth)
+    "simple".equalsIgnoreCase(yarnHttpAuth)
   }
 
   /**
@@ -127,8 +128,8 @@ object YarnUtils extends Logger {
         val conf = HadoopUtils.hadoopConf
         val useHttps = YarnConfiguration.useHttps(conf)
         val (addressPrefix, defaultPort, protocol) = useHttps match {
-          case x if x => (YarnConfiguration.RM_WEBAPP_HTTPS_ADDRESS, "8090", "https://")
-          case _ => (YarnConfiguration.RM_WEBAPP_ADDRESS, "8088", "http://")
+          case x if x => (YarnConfiguration.RM_WEBAPP_HTTPS_ADDRESS, "8090", Constant.HTTPS_SCHEMA)
+          case _ => (YarnConfiguration.RM_WEBAPP_ADDRESS, "8088", Constant.HTTP_SCHEMA)
         }
 
         rmHttpURL = Option(conf.get("yarn.web-proxy.address", null)) match {
@@ -141,12 +142,12 @@ object YarnUtils extends Logger {
                 val activeRMId = {
                   Option(RMHAUtils.findActiveRMHAId(yarnConf)) match {
                     case Some(x) =>
-                      logInfo("findActiveRMHAId successful")
+                      logInfo("'findActiveRMHAId' successful")
                       x
                     case None =>
                       // if you don't know why, don't modify it
                       logWarn(
-                        s"findActiveRMHAId is null,config yarn.acl.enable:${yarnConf.get("yarn.acl.enable")},now http try it.")
+                        s"'findActiveRMHAId' is null,config yarn.acl.enable:${yarnConf.get("yarn.acl.enable")},now http try it.")
                       // url ==> rmId
                       val idUrlMap = new JavaHashMap[String, String]
                       val rmIds = HAUtil.getRMHAIds(conf)
@@ -181,7 +182,7 @@ object YarnUtils extends Logger {
                 require(
                   activeRMId != null,
                   "[StreamPark] YarnUtils.getRMWebAppURL: can not found yarn active node")
-                logInfo(s"current activeRMHAId: $activeRMId")
+                logInfo(s"Current activeRMHAId: $activeRMId")
                 val appActiveRMKey = HAUtil.addSuffix(addressPrefix, activeRMId)
                 val hostnameActiveRMKey =
                   HAUtil.addSuffix(YarnConfiguration.RM_HOSTNAME, activeRMId)
@@ -220,7 +221,7 @@ object YarnUtils extends Logger {
               .append(address.getPort)
               .toString()
         }
-        logInfo(s"yarn resourceManager webapp url:$rmHttpURL")
+        logInfo(s"Yarn resourceManager webapp url:$rmHttpURL")
       }
     }
     rmHttpURL
@@ -243,46 +244,57 @@ object YarnUtils extends Logger {
    * @return
    */
   def restRequest(url: String): String = {
-
-    def request(reqUrl: String): String = {
-      logDebug("request url is " + reqUrl)
-      val config = RequestConfig.custom.setConnectTimeout(5000, TimeUnit.MILLISECONDS).build
-      if (hasYarnHttpKerberosAuth) {
-        HadoopUtils
-          .getUgi()
-          .doAs(new PrivilegedExceptionAction[String] {
-            override def run(): String = {
-              Try(HttpClientUtils.httpAuthGetRequest(reqUrl, config)) match {
-                case Success(v) => v
-                case Failure(e) =>
-                  logError("yarnUtils authRestRequest error, detail: ", e)
-                  null
-              }
-            }
-          })
-      } else {
-        val url = if (hasYarnHttpSampleAuth) {
-          s"$reqUrl?user.name=${HadoopUtils.hadoopUserName}"
-        } else reqUrl
-        Try(HttpClientUtils.httpGetRequest(url, config)) match {
-          case Success(v) => v
-          case Failure(e) =>
-            logError("yarnUtils restRequest error, detail: ", e)
-            null
-        }
-      }
-    }
+    if (url == null) return null
 
     url match {
-      case u if u.matches("^http(|s)://.*") => request(url)
+      case u if u.matches("^http(|s)://.*") =>
+        Try(request(url)) match {
+          case Success(v) => v
+          case Failure(e) =>
+            if (hasYarnHttpKerberosAuth) {
+              logError(s"yarnUtils authRestRequest error, url: $u, detail: $e")
+            } else {
+              logError(s"yarnUtils restRequest error, url: $u, detail: $e")
+            }
+            null
+        }
       case _ =>
-        val resp = request(s"${getRMWebAppURL()}/$url")
-        if (resp != null) resp;
-        else {
-          request(s"${getRMWebAppURL(true)}/$url")
+        Try(request(s"${getRMWebAppURL()}/$url")) match {
+          case Success(v) => v
+          case Failure(_) =>
+            Utils.retry[String](5) {
+              request(s"${getRMWebAppURL(true)}/$url")
+            } match {
+              case Success(v) => v
+              case Failure(e) =>
+                logError(s"yarnUtils restRequest retry 5 times all failed. detail: $e")
+                null
+            }
         }
     }
+  }
 
+  private[this] def request(reqUrl: String): String = {
+    val config = RequestConfig
+      .custom()
+      .setConnectTimeout(5000, TimeUnit.MILLISECONDS)
+      .build()
+    if (hasYarnHttpKerberosAuth) {
+      HadoopUtils
+        .getUgi()
+        .doAs(new PrivilegedExceptionAction[String] {
+          override def run(): String = {
+            HttpClientUtils.httpAuthGetRequest(reqUrl, config)
+          }
+        })
+    } else {
+      val url =
+        if (!hasYarnHttpSimpleAuth) reqUrl
+        else {
+          s"$reqUrl?user.name=${HadoopUtils.hadoopUserName}"
+        }
+      HttpClientUtils.httpGetRequest(url, config)
+    }
   }
 
 }

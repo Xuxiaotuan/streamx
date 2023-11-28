@@ -103,6 +103,8 @@ public class SavePointServiceImpl extends ServiceImpl<SavePointMapper, SavePoint
 
   @Autowired private FlinkAppHttpWatcher flinkAppHttpWatcher;
 
+  @Autowired private CommonServiceImpl commonService;
+
   private final ExecutorService executorService =
       new ThreadPoolExecutor(
           Runtime.getRuntime().availableProcessors() * 5,
@@ -175,6 +177,7 @@ public class SavePointServiceImpl extends ServiceImpl<SavePointMapper, SavePoint
     applicationLog.setJobManagerUrl(application.getJobManagerUrl());
     applicationLog.setOptionTime(new Date());
     applicationLog.setYarnAppId(application.getClusterId());
+    applicationLog.setUserId(commonService.getUserId());
 
     FlinkAppHttpWatcher.addSavepoint(application.getId());
 
@@ -196,11 +199,11 @@ public class SavePointServiceImpl extends ServiceImpl<SavePointMapper, SavePoint
   }
 
   @Override
-  public Boolean delete(Long id, Application application) throws InternalException {
+  public Boolean remove(Long id, Application appParam) throws InternalException {
     SavePoint savePoint = getById(id);
     try {
       if (StringUtils.isNotEmpty(savePoint.getPath())) {
-        application.getFsOperator().delete(savePoint.getPath());
+        appParam.getFsOperator().delete(savePoint.getPath());
       }
       return removeById(id);
     } catch (Exception e) {
@@ -209,7 +212,7 @@ public class SavePointServiceImpl extends ServiceImpl<SavePointMapper, SavePoint
   }
 
   @Override
-  public IPage<SavePoint> page(SavePoint savePoint, RestRequest request) {
+  public IPage<SavePoint> getPage(SavePoint savePoint, RestRequest request) {
     Page<SavePoint> page =
         new MybatisPager<SavePoint>().getPage(request, "trigger_time", Constant.ORDER_DESC);
     LambdaQueryWrapper<SavePoint> queryWrapper =
@@ -218,17 +221,17 @@ public class SavePointServiceImpl extends ServiceImpl<SavePointMapper, SavePoint
   }
 
   @Override
-  public void removeApp(Application application) {
-    Long appId = application.getId();
+  public void remove(Application appParam) {
+    Long appId = appParam.getId();
 
     LambdaQueryWrapper<SavePoint> queryWrapper =
         new LambdaQueryWrapper<SavePoint>().eq(SavePoint::getAppId, appId);
     this.remove(queryWrapper);
 
     try {
-      application
+      appParam
           .getFsOperator()
-          .delete(application.getWorkspace().APP_SAVEPOINTS().concat("/").concat(appId.toString()));
+          .delete(appParam.getWorkspace().APP_SAVEPOINTS().concat("/").concat(appId.toString()));
     } catch (Exception e) {
       log.error(e.getMessage(), e);
     }
@@ -304,7 +307,8 @@ public class SavePointServiceImpl extends ServiceImpl<SavePointMapper, SavePoint
   private String getClusterId(Application application, FlinkCluster cluster) {
     if (FlinkExecutionMode.isKubernetesMode(application.getExecutionMode())) {
       return application.getClusterId();
-    } else if (FlinkExecutionMode.isYarnMode(application.getExecutionMode())) {
+    }
+    if (FlinkExecutionMode.isYarnMode(application.getExecutionMode())) {
       if (FlinkExecutionMode.YARN_SESSION == application.getFlinkExecutionMode()) {
         Utils.notNull(
             cluster,
@@ -312,9 +316,8 @@ public class SavePointServiceImpl extends ServiceImpl<SavePointMapper, SavePoint
                 "The yarn session clusterId=%s cannot be find, maybe the clusterId is wrong or the cluster has been deleted. Please contact the Admin.",
                 application.getFlinkClusterId()));
         return cluster.getClusterId();
-      } else {
-        return application.getAppId();
       }
+      return application.getAppId();
     }
     return null;
   }

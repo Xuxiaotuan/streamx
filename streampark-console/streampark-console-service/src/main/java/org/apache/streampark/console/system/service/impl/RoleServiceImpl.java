@@ -28,6 +28,7 @@ import org.apache.streampark.console.system.service.MemberService;
 import org.apache.streampark.console.system.service.RoleMenuServie;
 import org.apache.streampark.console.system.service.RoleService;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -58,15 +59,15 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
   @Autowired private RoleMenuServie roleMenuService;
 
   @Override
-  public IPage<Role> findRoles(Role role, RestRequest request) {
+  public IPage<Role> getPage(Role role, RestRequest request) {
     Page<Role> page = new Page<>();
     page.setCurrent(request.getPageNum());
     page.setSize(request.getPageSize());
-    return this.baseMapper.findRole(page, role);
+    return this.baseMapper.selectPage(page, role);
   }
 
   @Override
-  public Role findByName(String roleName) {
+  public Role getByName(String roleName) {
     return baseMapper.selectOne(new LambdaQueryWrapper<Role>().eq(Role::getRoleName, roleName));
   }
 
@@ -80,21 +81,21 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
   }
 
   @Override
-  public void deleteRole(Long roleId) {
+  public void removeById(Long roleId) {
     Role role =
         Optional.ofNullable(this.getById(roleId))
             .orElseThrow(
                 () ->
                     new ApiAlertException(
                         String.format("Role id [%s] not found. Delete role failed.", roleId)));
-    List<Long> userIdsByRoleId = memberService.findUserIdsByRoleId(roleId);
+    List<Long> userIdsByRoleId = memberService.listUserIdsByRoleId(roleId);
     ApiAlertException.throwIfFalse(
-        userIdsByRoleId == null || userIdsByRoleId.isEmpty(),
+        CollectionUtils.isEmpty(userIdsByRoleId),
         String.format(
             "There are some users of role %s, delete role failed, please unbind it first.",
             role.getRoleName()));
-    this.removeById(roleId);
-    this.roleMenuService.deleteByRoleId(roleId);
+    super.removeById(roleId);
+    this.roleMenuService.removeByRoleId(roleId);
   }
 
   @Override

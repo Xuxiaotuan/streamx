@@ -17,6 +17,7 @@
 
 package org.apache.streampark.console.core.service.impl;
 
+import org.apache.streampark.common.Constant;
 import org.apache.streampark.common.conf.CommonConfig;
 import org.apache.streampark.common.conf.InternalConfigHolder;
 import org.apache.streampark.common.conf.Workspace;
@@ -108,9 +109,8 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
 
     if (status) {
       return response.message("Add project successfully").data(true);
-    } else {
-      return response.message("Add project failed").data(false);
     }
+    return response.message("Add project failed").data(false);
   }
 
   @Override
@@ -141,7 +141,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
     if (projectParam.getBuildState() != null) {
       project.setBuildState(projectParam.getBuildState());
       if (BuildStateEnum.NEED_REBUILD == BuildStateEnum.of(projectParam.getBuildState())) {
-        List<Application> applications = getApplications(project);
+        List<Application> applications = listApps(project);
         // Update deployment status
         applications.forEach(
             (app) -> {
@@ -157,7 +157,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
   }
 
   @Override
-  public boolean delete(Long id) {
+  public boolean removeById(Long id) {
     Project project = getById(id);
     Utils.notNull(project);
     LambdaQueryWrapper<Application> queryWrapper =
@@ -168,7 +168,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
     }
     try {
       project.delete();
-      removeById(id);
+      super.removeById(id);
       return true;
     } catch (IOException e) {
       return false;
@@ -176,9 +176,9 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
   }
 
   @Override
-  public IPage<Project> page(Project project, RestRequest request) {
+  public IPage<Project> getPage(Project project, RestRequest request) {
     Page<Project> page = new MybatisPager<Project>().getDefaultPage(request);
-    return this.baseMapper.page(page, project);
+    return this.baseMapper.selectPage(page, project);
   }
 
   @Override
@@ -187,8 +187,8 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
   }
 
   @Override
-  public List<Project> findByTeamId(Long teamId) {
-    return this.baseMapper.selectByTeamId(teamId);
+  public List<Project> listByTeamId(Long teamId) {
+    return this.baseMapper.selectProjectsByTeamId(teamId);
   }
 
   @Override
@@ -209,7 +209,7 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
             },
             fileLogger -> {
               List<Application> applications =
-                  this.applicationManageService.getByProjectId(project.getId());
+                  this.applicationManageService.listByProjectId(project.getId());
               applications.forEach(
                   (app) -> {
                     fileLogger.info(
@@ -246,16 +246,16 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
 
   @Override
   public List<String> jars(Project project) {
-    List<String> list = new ArrayList<>(0);
+    List<String> jarList = new ArrayList<>(0);
     ApiAlertException.throwIfNull(
         project.getModule(), "Project module can't be null, please check.");
     File apps = new File(project.getDistHome(), project.getModule());
     for (File file : Objects.requireNonNull(apps.listFiles())) {
-      if (file.getName().endsWith(".jar")) {
-        list.add(file.getName());
+      if (file.getName().endsWith(Constant.JAR_SUFFIX)) {
+        jarList.add(file.getName());
       }
     }
-    return list;
+    return jarList;
   }
 
   @Override
@@ -270,12 +270,12 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
   }
 
   @Override
-  public List<Application> getApplications(Project project) {
-    return this.applicationManageService.getByProjectId(project.getId());
+  public List<Application> listApps(Project project) {
+    return this.applicationManageService.listByProjectId(project.getId());
   }
 
   @Override
-  public boolean checkExists(Project project) {
+  public boolean exists(Project project) {
     if (project.getId() != null) {
       Project proj = getById(project.getId());
       if (proj.getName().equals(project.getName())) {
@@ -295,13 +295,13 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project>
       if (!unzipFile.exists()) {
         GZipUtils.deCompress(file.getAbsolutePath(), file.getParentFile().getAbsolutePath());
       }
-      List<Map<String, Object>> list = new ArrayList<>();
+      List<Map<String, Object>> confList = new ArrayList<>();
       File[] files = unzipFile.listFiles(x -> "conf".equals(x.getName()));
       Utils.notNull(files);
       for (File item : files) {
-        eachFile(item, list, true);
+        eachFile(item, confList, true);
       }
-      return list;
+      return confList;
     } catch (Exception e) {
       log.info(e.getMessage());
     }

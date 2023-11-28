@@ -17,10 +17,12 @@
 
 package org.apache.streampark.console.core.entity;
 
-import org.apache.streampark.common.conf.ConfigConst;
+import org.apache.streampark.common.conf.ConfigKeys;
 import org.apache.streampark.common.util.DeflaterUtils;
 import org.apache.streampark.common.util.PropertiesUtils;
 import org.apache.streampark.console.core.enums.ConfigFileTypeEnum;
+
+import org.apache.commons.collections.MapUtils;
 
 import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -95,22 +97,22 @@ public class ApplicationConfig {
       }
     }
 
-    if (configs != null && !configs.isEmpty()) {
+    if (MapUtils.isNotEmpty(configs)) {
       return configs.entrySet().stream()
           .collect(
               Collectors.toMap(
                   entry -> {
                     String key = entry.getKey();
-                    if (key.startsWith(ConfigConst.KEY_FLINK_OPTION_PREFIX())) {
-                      key = key.substring(ConfigConst.KEY_FLINK_OPTION_PREFIX().length());
-                    } else if (key.startsWith(ConfigConst.KEY_FLINK_PROPERTY_PREFIX())) {
-                      key = key.substring(ConfigConst.KEY_FLINK_PROPERTY_PREFIX().length());
-                    } else if (key.startsWith(ConfigConst.KEY_FLINK_TABLE_PREFIX())) {
-                      key = key.substring(ConfigConst.KEY_FLINK_TABLE_PREFIX().length());
-                    } else if (key.startsWith(ConfigConst.KEY_APP_PREFIX())) {
-                      key = key.substring(ConfigConst.KEY_APP_PREFIX().length());
-                    } else if (key.startsWith(ConfigConst.KEY_SQL_PREFIX())) {
-                      key = key.substring(ConfigConst.KEY_SQL_PREFIX().length());
+                    if (key.startsWith(ConfigKeys.KEY_FLINK_OPTION_PREFIX())) {
+                      key = key.substring(ConfigKeys.KEY_FLINK_OPTION_PREFIX().length());
+                    } else if (key.startsWith(ConfigKeys.KEY_FLINK_PROPERTY_PREFIX())) {
+                      key = key.substring(ConfigKeys.KEY_FLINK_PROPERTY_PREFIX().length());
+                    } else if (key.startsWith(ConfigKeys.KEY_FLINK_TABLE_PREFIX())) {
+                      key = key.substring(ConfigKeys.KEY_FLINK_TABLE_PREFIX().length());
+                    } else if (key.startsWith(ConfigKeys.KEY_APP_PREFIX())) {
+                      key = key.substring(ConfigKeys.KEY_APP_PREFIX().length());
+                    } else if (key.startsWith(ConfigKeys.KEY_SQL_PREFIX())) {
+                      key = key.substring(ConfigKeys.KEY_SQL_PREFIX().length());
                     }
                     return key;
                   },

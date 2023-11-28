@@ -46,7 +46,7 @@ import java.util.Map;
 @Slf4j
 @Validated
 @RestController
-@RequestMapping("flink/project")
+@RequestMapping("project")
 public class ProjectController {
 
   @Autowired private ProjectService projectService;
@@ -98,7 +98,7 @@ public class ProjectController {
     if (project.getTeamId() == null) {
       return RestResponse.success(Collections.emptyList());
     }
-    IPage<Project> page = projectService.page(project, restRequest);
+    IPage<Project> page = projectService.getPage(project, restRequest);
     return RestResponse.success().data(page);
   }
 
@@ -113,7 +113,7 @@ public class ProjectController {
   @PostMapping("delete")
   @RequiresPermissions("project:delete")
   public RestResponse delete(Long id) {
-    Boolean deleted = projectService.delete(id);
+    Boolean deleted = projectService.removeById(id);
     return RestResponse.success().data(deleted);
   }
 
@@ -127,7 +127,7 @@ public class ProjectController {
   @Operation(summary = "Check the project")
   @PostMapping("exists")
   public RestResponse exists(Project project) {
-    boolean exists = projectService.checkExists(project);
+    boolean exists = projectService.exists(project);
     return RestResponse.success().data(exists);
   }
 
@@ -148,14 +148,14 @@ public class ProjectController {
   @Operation(summary = "List project configurations")
   @PostMapping("listconf")
   public RestResponse listConf(Project project) {
-    List<Map<String, Object>> list = projectService.listConf(project);
-    return RestResponse.success().data(list);
+    List<Map<String, Object>> confList = projectService.listConf(project);
+    return RestResponse.success().data(confList);
   }
 
   @Operation(summary = "List the team projects")
   @PostMapping("select")
   public RestResponse select(@RequestParam Long teamId) {
-    List<Project> list = projectService.findByTeamId(teamId);
-    return RestResponse.success().data(list);
+    List<Project> projectList = projectService.listByTeamId(teamId);
+    return RestResponse.success().data(projectList);
   }
 }

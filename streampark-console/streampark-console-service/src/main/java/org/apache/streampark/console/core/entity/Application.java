@@ -17,8 +17,8 @@
 
 package org.apache.streampark.console.core.entity;
 
-import org.apache.streampark.common.conf.ConfigConst;
-import org.apache.streampark.common.conf.K8sFlinkConfig;
+import org.apache.streampark.common.Constant;
+import org.apache.streampark.common.conf.ConfigKeys;
 import org.apache.streampark.common.conf.Workspace;
 import org.apache.streampark.common.enums.ApplicationType;
 import org.apache.streampark.common.enums.FlinkDevelopmentMode;
@@ -37,6 +37,7 @@ import org.apache.streampark.console.core.utils.YarnQueueLabelExpression;
 import org.apache.streampark.flink.kubernetes.model.K8sPodTemplates;
 import org.apache.streampark.flink.packer.maven.DependencyInfo;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.baomidou.mybatisplus.annotation.FieldStrategy;
@@ -47,6 +48,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -101,7 +103,7 @@ public class Application implements Serializable {
   private String k8sName;
 
   /** k8s namespace */
-  private String k8sNamespace = K8sFlinkConfig.DEFAULT_KUBERNETES_NAMESPACE();
+  private String k8sNamespace = Constant.DEFAULT;
 
   /** The exposed type of the rest service of K8s(kubernetes.rest-service.exposed.type) */
   private Integer k8sRestExposedType;
@@ -111,7 +113,7 @@ public class Application implements Serializable {
   private String k8sJmPodTemplate;
   private String k8sTmPodTemplate;
 
-  private String ingressTemplate;
+  @Getter private String ingressTemplate;
   private String defaultModeIngress;
 
   /** flink-hadoop integration on flink-k8s mode */
@@ -251,19 +253,12 @@ public class Application implements Serializable {
 
   private transient AppControl appControl;
 
-  public String getIngressTemplate() {
-    return ingressTemplate;
-  }
-
   public void setDefaultModeIngress(String defaultModeIngress) {
     this.defaultModeIngress = defaultModeIngress;
   }
 
   public void setK8sNamespace(String k8sNamespace) {
-    this.k8sNamespace =
-        StringUtils.isBlank(k8sNamespace)
-            ? K8sFlinkConfig.DEFAULT_KUBERNETES_NAMESPACE()
-            : k8sNamespace;
+    this.k8sNamespace = StringUtils.isBlank(k8sNamespace) ? Constant.DEFAULT : k8sNamespace;
   }
 
   public K8sPodTemplates getK8sPodTemplates() {
@@ -282,10 +277,11 @@ public class Application implements Serializable {
     }
 
     Map<String, Object> hotParamsMap = this.getHotParamsMap();
-    if (!hotParamsMap.isEmpty() && hotParamsMap.containsKey(ConfigConst.KEY_YARN_APP_QUEUE())) {
-      String yarnQueue = hotParamsMap.get(ConfigConst.KEY_YARN_APP_QUEUE()).toString();
+    if (MapUtils.isNotEmpty(hotParamsMap)
+        && hotParamsMap.containsKey(ConfigKeys.KEY_YARN_APP_QUEUE())) {
+      String yarnQueue = hotParamsMap.get(ConfigKeys.KEY_YARN_APP_QUEUE()).toString();
       String labelExpr =
-          Optional.ofNullable(hotParamsMap.get(ConfigConst.KEY_YARN_APP_NODE_LABEL()))
+          Optional.ofNullable(hotParamsMap.get(ConfigKeys.KEY_YARN_APP_NODE_LABEL()))
               .map(Object::toString)
               .orElse(null);
       this.setYarnQueue(YarnQueueLabelExpression.of(yarnQueue, labelExpr).toString());
@@ -367,10 +363,10 @@ public class Application implements Serializable {
   }
 
   public boolean eqFlinkJob(Application other) {
-    if (this.isFlinkSqlJob() && other.isFlinkSqlJob()) {
-      if (this.getFlinkSql().trim().equals(other.getFlinkSql().trim())) {
-        return this.getDependencyObject().equals(other.getDependencyObject());
-      }
+    if (this.isFlinkSqlJob()
+        && other.isFlinkSqlJob()
+        && this.getFlinkSql().trim().equals(other.getFlinkSql().trim())) {
+      return this.getDependencyObject().equals(other.getDependencyObject());
     }
     return false;
   }
@@ -541,7 +537,7 @@ public class Application implements Serializable {
   @SneakyThrows
   @SuppressWarnings("unchecked")
   public Map<String, Object> getHotParamsMap() {
-    if (this.hotParams != null) {
+    if (StringUtils.isNotBlank(this.hotParams)) {
       Map<String, Object> map = JacksonUtils.read(this.hotParams, Map.class);
       map.entrySet().removeIf(entry -> entry.getValue() == null);
       return map;
@@ -564,7 +560,7 @@ public class Application implements Serializable {
     if (needFillYarnQueueLabel(executionModeEnum)) {
       hotParams.putAll(YarnQueueLabelExpression.getQueueLabelMap(appParam.getYarnQueue()));
     }
-    if (!hotParams.isEmpty()) {
+    if (MapUtils.isNotEmpty(hotParams)) {
       this.setHotParams(JacksonUtils.write(hotParams));
     }
   }

@@ -16,19 +16,20 @@
  */
 package org.apache.streampark.common.util
 
-import org.apache.streampark.common.util.ImplicitsUtils._
-
 import org.apache.commons.lang3.StringUtils
 
 import java.io._
 import java.net.URL
+import java.time.{Duration, LocalDateTime}
 import java.util.{jar, Collection => JavaCollection, Map => JavaMap, Properties, UUID}
+import java.util.concurrent.locks.LockSupport
 import java.util.jar.{JarFile, JarInputStream}
 
+import scala.annotation.tailrec
 import scala.collection.convert.ImplicitConversions._
 import scala.util.{Failure, Success, Try}
 
-object Utils {
+object Utils extends Logger {
 
   private[this] lazy val OS = System.getProperty("os.name").toLowerCase
 
@@ -65,7 +66,7 @@ object Utils {
 
   def required(expression: Boolean, errorMessage: Any): Unit = {
     if (!expression) {
-      throw new IllegalArgumentException(s"requirement failed: ${errorMessage.toString}")
+      throw new IllegalArgumentException(s"Requirement failed: ${errorMessage.toString}")
     }
   }
 
@@ -128,8 +129,9 @@ object Utils {
       c => {
         try {
           if (c != null) {
-            if (c.isInstanceOf[Flushable]) {
-              c.asInstanceOf[Flushable].flush()
+            c match {
+              case flushable: Flushable => flushable.flush()
+              case _ =>
             }
             c.close()
           }
@@ -137,6 +139,38 @@ object Utils {
           case e: Throwable if func != null => func(e)
         }
       })
+  }
+
+  @tailrec
+  def retry[R](retryCount: Int, interval: Duration = Duration.ofSeconds(5))(f: => R): Try[R] = {
+    require(retryCount >= 0)
+    Try(f) match {
+      case Success(result) => Success(result)
+      case Failure(e) if retryCount > 0 =>
+        logWarn(s"Retry failed, execution caused by: ", e)
+        logWarn(
+          s"$retryCount times retry remaining, the next attempt will be in ${interval.toMillis} ms")
+        LockSupport.parkNanos(interval.toNanos)
+        retry(retryCount - 1, interval)(f)
+      case Failure(e) => Failure(e)
+    }
+  }
+
+  def printLogo(info: String): Unit = {
+    // scalastyle:off println
+    println("\n")
+    println("        _____ __                                             __       ")
+    println("       / ___// /_________  ____ _____ ___  ____  ____ ______/ /__     ")
+    println("       \\__ \\/ __/ ___/ _ \\/ __ `/ __ `__ \\/ __ \\  __ `/ ___/ //_/")
+    println("      ___/ / /_/ /  /  __/ /_/ / / / / / / /_/ / /_/ / /  / ,<        ")
+    println("     /____/\\__/_/   \\___/\\__,_/_/ /_/ /_/ ____/\\__,_/_/  /_/|_|   ")
+    println("                                       /_/                        \n\n")
+    println("    Version:  2.2.0-SNAPSHOT                                          ")
+    println("    WebSite:  https://streampark.apache.org                           ")
+    println("    GitHub :  https://github.com/apache/incubator-streampark                    ")
+    println(s"    Info   :  $info                                 ")
+    println(s"    Time   :  ${LocalDateTime.now}              \n\n")
+    // scalastyle:on println
   }
 
 }
