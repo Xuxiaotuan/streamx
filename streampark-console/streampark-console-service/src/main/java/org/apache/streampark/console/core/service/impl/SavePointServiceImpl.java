@@ -21,7 +21,6 @@ import org.apache.streampark.common.enums.FlinkExecutionMode;
 import org.apache.streampark.common.util.CompletableFutureUtils;
 import org.apache.streampark.common.util.ExceptionUtils;
 import org.apache.streampark.common.util.Utils;
-import org.apache.streampark.console.base.domain.Constant;
 import org.apache.streampark.console.base.domain.RestRequest;
 import org.apache.streampark.console.base.exception.ApiAlertException;
 import org.apache.streampark.console.base.exception.InternalException;
@@ -59,6 +58,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -146,7 +146,7 @@ public class SavePointServiceImpl extends ServiceImpl<SavePointMapper, SavePoint
     // task, see if Application conf is configured when the task is defined, if checkpoints are
     // configured
     // and enabled, read `state.savepoints.dir`
-    savepointPath = getSavepointFromAppCfgIfStreamParkOrSQLJob(application);
+    savepointPath = getSavepointFromConfig(application);
     if (StringUtils.isNotBlank(savepointPath)) {
       return savepointPath;
     }
@@ -162,15 +162,7 @@ public class SavePointServiceImpl extends ServiceImpl<SavePointMapper, SavePoint
   public void trigger(Long appId, @Nullable String savepointPath, @Nullable Boolean nativeFormat) {
     log.info("Start to trigger savepoint for app {}", appId);
     Application application = applicationManageService.getById(appId);
-
-    ApplicationLog applicationLog = new ApplicationLog();
-    applicationLog.setOptionName(OperationEnum.SAVEPOINT.getValue());
-    applicationLog.setAppId(application.getId());
-    applicationLog.setJobManagerUrl(application.getJobManagerUrl());
-    applicationLog.setOptionTime(new Date());
-    applicationLog.setYarnAppId(application.getClusterId());
-    applicationLog.setUserId(commonService.getUserId());
-
+    ApplicationLog applicationLog = getApplicationLog(application);
     FlinkAppHttpWatcher.addSavepoint(application.getId());
 
     application.setOptionState(OptionStateEnum.SAVEPOINTING.getValue());
@@ -190,6 +182,18 @@ public class SavePointServiceImpl extends ServiceImpl<SavePointMapper, SavePoint
     handleSavepointResponseFuture(application, applicationLog, savepointFuture);
   }
 
+  @NotNull
+  private ApplicationLog getApplicationLog(Application application) {
+    ApplicationLog applicationLog = new ApplicationLog();
+    applicationLog.setOptionName(OperationEnum.SAVEPOINT.getValue());
+    applicationLog.setAppId(application.getId());
+    applicationLog.setJobManagerUrl(application.getJobManagerUrl());
+    applicationLog.setOptionTime(new Date());
+    applicationLog.setYarnAppId(application.getClusterId());
+    applicationLog.setUserId(commonService.getUserId());
+    return applicationLog;
+  }
+
   @Override
   public Boolean remove(Long id, Application appParam) throws InternalException {
     SavePoint savePoint = getById(id);
@@ -205,8 +209,8 @@ public class SavePointServiceImpl extends ServiceImpl<SavePointMapper, SavePoint
 
   @Override
   public IPage<SavePoint> getPage(SavePoint savePoint, RestRequest request) {
-    Page<SavePoint> page =
-        new MybatisPager<SavePoint>().getPage(request, "trigger_time", Constant.ORDER_DESC);
+    request.setSortField("trigger_time");
+    Page<SavePoint> page = MybatisPager.getPage(request);
     LambdaQueryWrapper<SavePoint> queryWrapper =
         new LambdaQueryWrapper<SavePoint>().eq(SavePoint::getAppId, savePoint.getAppId());
     return this.page(page, queryWrapper);
@@ -336,7 +340,7 @@ public class SavePointServiceImpl extends ServiceImpl<SavePointMapper, SavePoint
    */
   @VisibleForTesting
   @Nullable
-  public String getSavepointFromAppCfgIfStreamParkOrSQLJob(Application application) {
+  public String getSavepointFromConfig(Application application) {
     if (!application.isStreamParkJob() && !application.isFlinkSqlJob()) {
       return null;
     }

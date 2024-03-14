@@ -19,7 +19,6 @@ package org.apache.streampark.console.core.service.impl;
 
 import org.apache.streampark.common.util.DeflaterUtils;
 import org.apache.streampark.common.util.Utils;
-import org.apache.streampark.console.base.domain.Constant;
 import org.apache.streampark.console.base.domain.RestRequest;
 import org.apache.streampark.console.base.exception.ApiAlertException;
 import org.apache.streampark.console.base.mybatis.pager.MybatisPager;
@@ -103,59 +102,69 @@ public class ApplicationConfigServiceImpl
     // flink sql job
     ApplicationConfig latestConfig = getLatest(appParam.getId());
     if (appParam.isFlinkSqlJob()) {
-      // get effect config
-      ApplicationConfig effectiveConfig = getEffective(appParam.getId());
-      if (Utils.isEmpty(appParam.getConfig())) {
-        if (effectiveConfig != null) {
-          effectiveService.remove(appParam.getId(), EffectiveTypeEnum.CONFIG);
+      updateForFlinkSqlJob(appParam, latest, latestConfig);
+    } else {
+      updateForNonFlinkSqlJob(appParam, latest, latestConfig);
+    }
+  }
+
+  private void updateForNonFlinkSqlJob(
+      Application appParam, Boolean latest, ApplicationConfig latestConfig) {
+    // may be re-selected a config file (without config id), or may be based on an original edit
+    // (with config Id).
+    Long configId = appParam.getConfigId();
+    // an original edit
+    if (configId != null) {
+      ApplicationConfig config = this.getById(configId);
+      String decode = new String(Base64.getDecoder().decode(appParam.getConfig()));
+      String encode = DeflaterUtils.zipString(decode.trim());
+      // create...
+      if (!config.getContent().equals(encode)) {
+        if (latestConfig != null) {
+          removeById(latestConfig.getId());
         }
+        this.create(appParam, latest);
       } else {
-        // there was no configuration before, is a new configuration
-        if (effectiveConfig == null) {
-          if (latestConfig != null) {
-            removeById(latestConfig.getId());
-          }
-          this.create(appParam, latest);
-        } else {
-          String decode = new String(Base64.getDecoder().decode(appParam.getConfig()));
-          String encode = DeflaterUtils.zipString(decode.trim());
-          // need to diff the two configs are consistent
-          if (!effectiveConfig.getContent().equals(encode)) {
-            if (latestConfig != null) {
-              removeById(latestConfig.getId());
-            }
-            this.create(appParam, latest);
-          }
-        }
+        this.setLatestOrEffective(latest, configId, appParam.getId());
       }
     } else {
-      // may be re-selected a config file (without config id), or may be based on an original edit
-      // (with config Id).
-      Long configId = appParam.getConfigId();
-      // an original edit
-      if (configId != null) {
-        ApplicationConfig config = this.getById(configId);
+      ApplicationConfig config = getEffective(appParam.getId());
+      if (config != null) {
         String decode = new String(Base64.getDecoder().decode(appParam.getConfig()));
         String encode = DeflaterUtils.zipString(decode.trim());
         // create...
         if (!config.getContent().equals(encode)) {
+          this.create(appParam, latest);
+        }
+      } else {
+        this.create(appParam, latest);
+      }
+    }
+  }
+
+  private void updateForFlinkSqlJob(
+      Application appParam, Boolean latest, ApplicationConfig latestConfig) {
+    // get effect config
+    ApplicationConfig effectiveConfig = getEffective(appParam.getId());
+    if (Utils.isEmpty(appParam.getConfig())) {
+      if (effectiveConfig != null) {
+        effectiveService.remove(appParam.getId(), EffectiveTypeEnum.CONFIG);
+      }
+    } else {
+      // there was no configuration before, is a new configuration
+      if (effectiveConfig == null) {
+        if (latestConfig != null) {
+          removeById(latestConfig.getId());
+        }
+        this.create(appParam, latest);
+      } else {
+        String decode = new String(Base64.getDecoder().decode(appParam.getConfig()));
+        String encode = DeflaterUtils.zipString(decode.trim());
+        // need to diff the two configs are consistent
+        if (!effectiveConfig.getContent().equals(encode)) {
           if (latestConfig != null) {
             removeById(latestConfig.getId());
           }
-          this.create(appParam, latest);
-        } else {
-          this.setLatestOrEffective(latest, configId, appParam.getId());
-        }
-      } else {
-        ApplicationConfig config = getEffective(appParam.getId());
-        if (config != null) {
-          String decode = new String(Base64.getDecoder().decode(appParam.getConfig()));
-          String encode = DeflaterUtils.zipString(decode.trim());
-          // create...
-          if (!config.getContent().equals(encode)) {
-            this.create(appParam, latest);
-          }
-        } else {
           this.create(appParam, latest);
         }
       }
@@ -203,8 +212,8 @@ public class ApplicationConfigServiceImpl
 
   @Override
   public IPage<ApplicationConfig> getPage(ApplicationConfig config, RestRequest request) {
-    Page<ApplicationConfig> page =
-        new MybatisPager<ApplicationConfig>().getPage(request, "version", Constant.ORDER_DESC);
+    request.setSortField("version");
+    Page<ApplicationConfig> page = MybatisPager.getPage(request);
     IPage<ApplicationConfig> configList =
         this.baseMapper.selectPageByAppId(page, config.getAppId());
     fillEffectiveField(config.getAppId(), configList.getRecords());
@@ -212,14 +221,14 @@ public class ApplicationConfigServiceImpl
   }
 
   @Override
-  public List<ApplicationConfig> list(Application appParam) {
+  public List<ApplicationConfig> list(Long appId) {
     LambdaQueryWrapper<ApplicationConfig> queryWrapper =
         new LambdaQueryWrapper<ApplicationConfig>()
-            .eq(ApplicationConfig::getAppId, appParam.getId())
+            .eq(ApplicationConfig::getAppId, appId)
             .orderByDesc(ApplicationConfig::getVersion);
 
     List<ApplicationConfig> configList = this.baseMapper.selectList(queryWrapper);
-    fillEffectiveField(appParam.getId(), configList);
+    fillEffectiveField(appId, configList);
     return configList;
   }
 

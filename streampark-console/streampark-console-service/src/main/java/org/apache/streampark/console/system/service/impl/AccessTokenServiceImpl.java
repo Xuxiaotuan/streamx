@@ -74,7 +74,9 @@ public class AccessTokenServiceImpl extends ServiceImpl<AccessTokenMapper, Acces
     accessToken.setUserId(user.getUserId());
     accessToken.setDescription(description);
     accessToken.setExpireTime(DateUtils.stringToDate(jwtToken.getExpireAt()));
-    accessToken.setCreateTime(new Date());
+    Date date = new Date();
+    accessToken.setCreateTime(date);
+    accessToken.setModifyTime(date);
     accessToken.setStatus(AccessToken.STATUS_ENABLE);
 
     this.save(accessToken);
@@ -83,7 +85,7 @@ public class AccessTokenServiceImpl extends ServiceImpl<AccessTokenMapper, Acces
 
   @Override
   public IPage<AccessToken> getPage(AccessToken tokenParam, RestRequest request) {
-    Page<AccessToken> page = new MybatisPager<AccessToken>().getDefaultPage(request);
+    Page<AccessToken> page = MybatisPager.getPage(request);
     this.baseMapper.selectPage(page, tokenParam);
     List<AccessToken> records = page.getRecords();
     page.setRecords(records);

@@ -60,13 +60,9 @@ public class Variable implements Serializable {
 
   private Boolean desensitization;
 
-  private transient Date createTime;
+  private Date createTime;
 
-  private transient Date modifyTime;
-
-  private transient String sortField;
-
-  private transient String sortOrder;
+  private Date modifyTime;
 
   public void dataMasking() {
     if (desensitization) {

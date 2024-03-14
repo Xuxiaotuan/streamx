@@ -75,13 +75,9 @@ public class Resource implements Serializable {
   @NotNull(message = "{required}")
   private Long teamId;
 
-  private transient Date createTime;
+  private Date createTime;
 
-  private transient Date modifyTime;
-
-  private transient String sortField;
-
-  private transient String sortOrder;
+  private Date modifyTime;
 
   private transient String connector;
 
