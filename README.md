@@ -27,8 +27,6 @@ Apache StreamPark
 [![Latest release](https://img.shields.io/github/v/release/apache/streampark.svg?style=for-the-badge&label=release)](https://github.com/apache/streampark/releases)
 [![X Follow](https://img.shields.io/badge/2K%2B-follow?style=for-the-badge&logo=X&label=%40ASFStreamPark)](https://x.com/ASFStreamPark)
 
-[![Official Website](<https://img.shields.io/badge/Official%20Website%20%E2%86%92-rgb(66,56,255)?style=for-the-badge>)](https://streampark.apache.org/)
-
 ## 📊 Overview
 
 **StreamPark** is a streaming application development framework and cloud-native real-time computing platform. Designed to simplify the development and management of streaming applications, StreamPark provides a development framework for constructing stream processing applications using Apache Flink and Apache Spark, along with a professional streaming application management platform. The platform encompasses application development, debugging, interactive querying, deployment, operation, maintenance, and more. Originally named StreamX, the project was renamed StreamPark in August 2022 and officially graduated as an Apache Top-Level Project (TLP) in January 2025.
@@ -61,7 +59,6 @@ https://github.com/user-attachments/assets/dd7d5a89-bc28-4ccc-9ad5-258925fc4f34
 more:
 - [Start with Docker](docker/README.md)
 - [Start with Kubernetes](helm/README.md)
-- [Official Docs](https://streampark.apache.org/docs/framework/quick-start)
 
 ## 🔨 How to Build
 
@@ -83,7 +80,7 @@ Please head to the [releases page](https://streampark.apache.org/download) to do
 
 Various companies and organizations use Apache StreamPark for research, production and commercial products. Are you using this project? [Welcome to add your company](https://github.com/apache/streampark/issues/163)!
 
-![Our users](https://streampark.apache.org/image/users.png)
+![Our users](https://streampark.apache.org/image/users.png?20250214)
 
 
 ## 🤝 Contribution
@@ -102,8 +99,6 @@ We welcome your suggestions, comments (including criticisms), comments and contr
 
 Thank you to all the people who already contributed to Apache StreamPark!
 
-[![contrib graph](https://contrib.rocks/image?repo=apache/streampark)](https://github.com/apache/streampark/graphs/contributors)
-
 ## 💬 Contact Us
 
 Contact us through the following mailing list.
@@ -120,7 +115,7 @@ Contact us through the following mailing list.
 - [bilibili](https://space.bilibili.com/455330087) (in Chinese)
 - WeChat Official Account (in Chinese, scan the QR code to follow)
 
-<img src="https://streampark.apache.org/image/wx_qr.png" alt="Join the Group" height="350px"><br>
+<img src="https://streampark.apache.org/image/wx_qr.png" alt="Join the Group" height="300px"><br>
 
 
 ## 📜 License
