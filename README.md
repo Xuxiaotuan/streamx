@@ -16,49 +16,48 @@
   ~
   -->
 
-<h1 align="center">
-   <img src="https://streampark.apache.org/image/logo_name.png" 
-   alt="StreamPark Logo" title="Apache StreamPark Logo" width="600"/>
-  <br>
-</h1>
+Apache StreamPark
+==========
 
-<h3 align="center">A magical framework that makes stream processing easier!</h3>
+<img src="https://streampark.apache.org/image/logo_name.png" alt="StreamPark logo" height="90px" align="right" />
 
-<div align="center">
+**StreamPark**: a streaming application development framework and cloud-native real-time computing platform.
 
-[![Stars](https://img.shields.io/github/stars/apache/streampark?style=for-the-badge&label=stars)](https://github.com/apache/streampark/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/apache/streampark?style=for-the-badge&label=stars)](https://github.com/apache/streampark/stargazers)
 [![Latest release](https://img.shields.io/github/v/release/apache/streampark.svg?style=for-the-badge&label=release)](https://github.com/apache/streampark/releases)
-[![Total Downloads](https://img.shields.io/github/downloads/apache/streampark/total.svg?style=for-the-badge&label=downloads)](https://streampark.apache.org/download)
-[![Twitter Follow](https://img.shields.io/twitter/follow/ASFStreamPark?label=follow&logo=x&style=for-the-badge)](https://twitter.com/ASFStreamPark)
+[![X Follow](https://img.shields.io/badge/2K%2B-follow?style=for-the-badge&logo=X&label=%40ASFStreamPark)](https://x.com/ASFStreamPark)
 
-**[Website](https://streampark.apache.org)**&nbsp;&nbsp;|&nbsp;&nbsp;
-**[Official Docs](https://streampark.apache.org/docs/get-started/intro)**&nbsp;&nbsp;|&nbsp;&nbsp;
-**[FAQ](https://github.com/apache/streampark/issues/507)**
+[![Official Website](<https://img.shields.io/badge/Official%20Website%20%E2%86%92-rgb(66,56,255)?style=for-the-badge>)](https://streampark.apache.org/)
 
-![](https://streampark.apache.org/image/dashboard-preview.png)
+## 📊 Overview
 
-</div>
+**StreamPark** is a streaming application development framework and cloud-native real-time computing platform. Designed to simplify the development and management of streaming applications, StreamPark provides a development framework for constructing stream processing applications using Apache Flink and Apache Spark, along with a professional streaming application management platform. The platform encompasses application development, debugging, interactive querying, deployment, operation, maintenance, and more. Originally named StreamX, the project was renamed StreamPark in August 2022 and officially graduated as an Apache Top-Level Project (TLP) in January 2025.
 
+* **Streaming Application Development Framework**
+    * StreamPark provides a Streaming application framework to simplify Apache Flink and Apache Spark application development, offering plug-and-play connectors to reduce the learning curve and development complexity.
+* **Real-Time Computing Platform**
+    * StreamPark delivers a one-stop real-time computing platform with core capabilities including application development, deployment, management and monitoring, etc.
+* **Supports Batch & Streaming**
+    * Supports both Apache Flink and Apache Spark, enabling seamless integration of streaming and batch processing, with multi-engine/multi-version support on a single platform.
+* **Supports multi-engine/multi-version**
+    * StreamPark supports multiple versions of Apache Flink and Apache Spark, enabling users to develop and manage applications for different versions of these streaming engines within a single framework.
+* **Multi-environment Compatibility**
+    * Compatible with various cluster environments, users can submit Flink and Spark applications to standalone clusters, YARN (Hadoop 2.x/3.x), and Kubernetes.
+* **Rich Ecosystems**
+    * Compatible with mainstream open-source technologies (e.g., Apache Flink, Apache Spark, Apache Paimon, Apache Doris) and ML/AI ecosystems, ensuring flexible technology adoption.
+* **Easy to use**
+    * StreamPark is designed to lower the learning curve and entry barrier. Only one service, deployment easy, allowing even beginners to get started within minutes.
 
-## 🚀 Abstract
-
-----
-<h4>Apache StreamPark™ is a stream processing development framework and application management platform. </h4>
-
-> Apache StreamPark™ is a streaming application development framework. Aimed at ease building and managing streaming applications, StreamPark provides development framework for writing stream processing application with Apache Flink and Apache Spark, More other engines will be supported in the future. Also, StreamPark is a professional management platform for streaming application, including application development, debugging, interactive query, deployment, operation, maintenance, etc. It was initially known as StreamX and renamed to StreamPark in August 2022.
-
-* Apache Flink & Apache Spark application development scaffold
-* Support multiple versions of Apache Flink & Apache Spark
-* Wide range of out-of-the-box connectors
-* One-stop stream processing operation platform
-* Support catalog、olap、streaming-warehouse etc.
-* ...
+<img src="https://streampark.apache.org/image/dashboard-preview.png"/>
 
 ## 🚀 QuickStart
 
 ```shell
 curl -L https://streampark.apache.org/quickstart.sh | sh
 ```
+
+https://github.com/user-attachments/assets/dd7d5a89-bc28-4ccc-9ad5-258925fc4f34
+
 more:
 - [Start with Docker](docker/README.md)
 - [Start with Kubernetes](helm/README.md)
@@ -70,17 +69,22 @@ more:
 ./build.sh
 ```
 
-🗄 Details:how to [Development](https://streampark.apache.org/docs/development/development)
+🗄 how to [Development](https://streampark.apache.org/docs/development/development)
 
-## 🧑‍💻 Downloads
+## ⬇️ Downloads
 
-Download address for run-directly software package: https://streampark.apache.org/download
+Please head to the [releases page](https://streampark.apache.org/download) to download a release of Apache StreamPark.
+
+## 📚 Docs
+
+[Official Documentation](https://streampark.apache.org/docs/get-started)
 
 ## 💋 Our users
 
-Various companies and organizations use Apache StreamPark™ for research, production and commercial products. Are you using this project? [Welcome to add your company](https://github.com/apache/streampark/issues/163)!
+Various companies and organizations use Apache StreamPark for research, production and commercial products. Are you using this project? [Welcome to add your company](https://github.com/apache/streampark/issues/163)!
 
 ![Our users](https://streampark.apache.org/image/users.png)
+
 
 ## 🤝 Contribution
 
@@ -96,18 +100,20 @@ You can submit any ideas as [pull requests](https://github.com/apache/streampark
 
 We welcome your suggestions, comments (including criticisms), comments and contributions. See [How to Contribute](https://streampark.apache.org/community/submit_guide/submit_code) and [Code Submission Guide](https://streampark.apache.org/community/submit_guide/code_style_and_quality_guide)
 
-### 📤 Subscribe Mailing Lists
-Mail List is the most recognized form of communication in Apache community. See how to [Join the Mailing Lists](https://streampark.apache.org/community/contribution_guide/mailing_lists)
-
-Thank you to all the people who already contributed to Apache StreamPark™!
+Thank you to all the people who already contributed to Apache StreamPark!
 
 [![contrib graph](https://contrib.rocks/image?repo=apache/streampark)](https://github.com/apache/streampark/graphs/contributors)
 
-## License
+## 💬 Contact Us
 
-Licensed under the [Apache License, Version 2.0](LICENSE)
+Contact us through the following mailing list.
 
-## 💬 Social Media
+| Name                                                          | Mailing list                                                                                                                                                                               | 
+|:--------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [dev@streampark.apache.org](mailto:dev@streampark.apache.org) | [Subscribe](mailto:dev-subscribe@streampark.apache.org)、[Unsubscribe](mailto:dev-unsubscribe@streampark.apache.org) 、[Archives](http://mail-archives.apache.org/mod_mbox/streampark-dev/) |
+
+
+## 💿 Social Media
 
 - [X (Twitter)](https://twitter.com/ASFStreamPark)
 - [Zhihu](https://www.zhihu.com/people/streampark) (in Chinese)
@@ -115,3 +121,8 @@ Licensed under the [Apache License, Version 2.0](LICENSE)
 - WeChat Official Account (in Chinese, scan the QR code to follow)
 
 <img src="https://streampark.apache.org/image/wx_qr.png" alt="Join the Group" height="350px"><br>
+
+
+## 📜 License
+
+Licensed under the [Apache License, Version 2.0](LICENSE)
