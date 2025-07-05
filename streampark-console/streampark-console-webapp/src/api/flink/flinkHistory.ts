@@ -17,13 +17,12 @@
 import { defHttp } from '/@/utils/http/axios';
 
 enum HISTORY_API {
-  UPLOAD_JARS = '/flink/history/uploadJars',
-  K8S_NAMESPACES = '/flink/history/k8sNamespaces',
-  SESSION_CLUSTER_IDS = '/flink/history/sessionClusterIds',
-  FLINK_BASE_IMAGES = '/flink/history/flinkBaseImages',
-  FLINK_POD_TEMPLATES = '/flink/history/flinkPodTemplates',
-  FLINK_JM_POD_TEMPLATES = '/flink/history/flinkJmPodTemplates',
-  FLINK_TM_POD_TEMPLATES = '/flink/history/flinkTmPodTemplates',
+  K8S_NAMESPACES = '/flink/history/k8s_namespaces',
+  SESSION_CLUSTER_IDS = '/flink/history/session_cluster_ids',
+  FLINK_BASE_IMAGES = '/flink/history/flink_base_images',
+  FLINK_POD_TEMPLATES = '/flink/history/flink_pod_templates',
+  FLINK_JM_POD_TEMPLATES = '/flink/history/flink_jm_pod_templates',
+  FLINK_TM_POD_TEMPLATES = '/flink/history/flink_tm_pod_templates',
 }
 
 /**
@@ -32,14 +31,6 @@ enum HISTORY_API {
  */
 export function fetchK8sNamespaces(): Promise<string[]> {
   return defHttp.post({ url: HISTORY_API.K8S_NAMESPACES });
-}
-
-/**
- * upload jar
- * @returns {Promise<string[]>}
- */
-export function fetchUploadJars(): Promise<string[]> {
-  return defHttp.post({ url: HISTORY_API.UPLOAD_JARS });
 }
 
 export function fetchSessionClusterIds(data) {

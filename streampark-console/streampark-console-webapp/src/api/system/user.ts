@@ -28,12 +28,12 @@ enum Api {
   UserList = '/user/list',
   NoTokenUsers = '/user/getNoTokenUser',
   UserUpdate = '/user/update',
+  UserDelete = '/user/delete',
   UserAdd = '/user/post',
   ResetPassword = '/user/password/reset',
   Password = '/user/password',
   CheckName = '/user/check/name',
-  SET_TEAM = '/user/setTeam',
-  INIT_TEAM = '/user/initTeam',
+  SET_TEAM = '/user/set_team',
   APP_OWNERS = '/user/appOwners',
   TransferUserResource = '/user/transferResource',
 }
@@ -61,6 +61,10 @@ export function getNoTokenUserList(data: Recordable): Promise<GetUserInfoModel> 
 
 export function updateUser(data: Recordable) {
   return defHttp.put({ url: Api.UserUpdate, data });
+}
+
+export function deleteUser(data) {
+  return defHttp.delete({ url: Api.UserDelete, data });
 }
 
 export function addUser(data: Recordable) {
@@ -96,13 +100,6 @@ export function fetchUserPasswordUpdate(data: {
 export function fetchAppOwners(data: Recordable): Promise<Array<UserInfo>> {
   return defHttp.post({
     url: Api.APP_OWNERS,
-    data,
-  });
-}
-
-export function fetchInitUserTeam(data: { userId: string; teamId: string }) {
-  return defHttp.post({
-    url: Api.INIT_TEAM,
     data,
   });
 }

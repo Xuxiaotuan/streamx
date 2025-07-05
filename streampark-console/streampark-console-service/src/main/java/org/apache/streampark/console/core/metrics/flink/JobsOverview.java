@@ -18,49 +18,55 @@
 package org.apache.streampark.console.core.metrics.flink;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 public class JobsOverview implements Serializable {
 
-  private List<Job> jobs;
+    private List<Job> jobs;
 
-  @Data
-  public static class Job implements Serializable {
-    @JsonProperty("jid")
-    private String id;
+    @Getter
+    @Setter
+    public static class Job implements Serializable {
 
-    private String name;
-    private String state;
+        @JsonProperty("jid")
+        private String id;
 
-    @JsonProperty("start-time")
-    private Long startTime;
+        private String name;
+        private String state;
 
-    @JsonProperty("end-time")
-    private Long endTime;
+        @JsonProperty("start-time")
+        private Long startTime;
 
-    private Long duration;
+        @JsonProperty("end-time")
+        private Long endTime;
 
-    @JsonProperty("last-modification")
-    private Long lastModification;
+        private Long duration;
 
-    private Task tasks;
-  }
+        @JsonProperty("last-modification")
+        private Long lastModification;
 
-  @Data
-  public static class Task implements Serializable {
-    private int total;
-    private int created;
-    private int scheduled;
-    private int deploying;
-    private int running;
-    private int finished;
-    private int canceling;
-    private int canceled;
-    private int failed;
-    private int reconciling;
-  }
+        private Task tasks;
+    }
+
+    @Getter
+    @Setter
+    public static class Task implements Serializable {
+
+        private int total;
+        private int created;
+        private int scheduled;
+        private int deploying;
+        private int running;
+        private int finished;
+        private int canceling;
+        private int canceled;
+        private int failed;
+        private int reconciling;
+    }
 }

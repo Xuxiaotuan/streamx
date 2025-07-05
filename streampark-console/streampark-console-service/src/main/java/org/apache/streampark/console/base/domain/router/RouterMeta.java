@@ -19,23 +19,25 @@ package org.apache.streampark.console.base.domain.router;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 
 /** Vue Router Meta */
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RouterMeta implements Serializable {
 
-  private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-  private Boolean closeable;
+    private Boolean closeable;
 
-  private Boolean hidden;
+    private Boolean hidden;
 
-  private Boolean keepAlive;
+    private Boolean keepAlive;
 
-  private String icon;
+    private String icon;
 }

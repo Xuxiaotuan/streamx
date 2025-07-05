@@ -17,13 +17,15 @@
 
 package org.apache.streampark.console.core.bean;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /** The robot alarm response of DingTalk And WeCom */
-@Data
+@Getter
+@Setter
 public class RobotResponse {
 
-  private Integer errcode;
+    private Integer errcode;
 
-  private String errmsg;
+    private String errmsg;
 }

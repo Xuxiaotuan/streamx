@@ -24,7 +24,8 @@
   import { BasicForm, useForm } from '/@/components/Form';
   import { onMounted, reactive, ref, nextTick, unref } from 'vue';
   import { Alert } from 'ant-design-vue';
-  import { fetchMain, fetchUpload, fetchUpdate } from '/@/api/flink/app';
+  import { fetchUpdate } from '/@/api/flink/app';
+  import { fetchUpload } from '/@/api/resource/upload';
   import { handleSubmitParams } from './utils';
   import PomTemplateTab from './components/PodTemplate/PomTemplateTab.vue';
   import { fetchListJars } from '/@/api/resource/project';
@@ -38,7 +39,7 @@
   import ProgramArgs from './components/ProgramArgs.vue';
   import VariableReview from './components/VariableReview.vue';
   import { useDrawer } from '/@/components/Drawer';
-  import { ExecModeEnum, ResourceFromEnum } from '/@/enums/flinkEnum';
+  import { DeployMode, ResourceFromEnum } from '/@/enums/flinkEnum';
 
   const route = useRoute();
   const { t } = useI18n();
@@ -73,7 +74,7 @@
   });
 
   /* Form reset */
-  function handleReset(executionMode?: string) {
+  function handleReset(deployMode?: string) {
     nextTick(async () => {
       let selectAlertId: string | undefined;
       if (app.alertId) {
@@ -90,7 +91,7 @@
         hadoopUser: app.hadoopUser,
         dynamicProperties: app.dynamicProperties,
         resolveOrder: app.resolveOrder,
-        executionMode: app.executionMode,
+        deployMode: app.deployMode,
         yarnQueue: app.yarnQueue,
         restartSize: app.restartSize,
         checkPointFailure: {
@@ -100,10 +101,6 @@
         },
         versionId: app.versionId || null,
         k8sRestExposedType: app.k8sRestExposedType,
-        clusterId: app.clusterId,
-        [app.executionMode == ExecModeEnum.YARN_SESSION
-          ? 'yarnSessionClusterId'
-          : 'flinkClusterId']: app.flinkClusterId,
         flinkImage: app.flinkImage,
         k8sNamespace: app.k8sNamespace,
         alertId: selectAlertId,
@@ -111,8 +108,21 @@
         module: app.module,
         ...resetParams,
       };
-      if (!executionMode) {
-        Object.assign(defaultParams, { executionMode: app.executionMode });
+      if (!deployMode) {
+        Object.assign(defaultParams, { deployMode: app.deployMode });
+      }
+      switch (app.deployMode) {
+        case DeployMode.STANDALONE:
+          defaultParams['remoteClusterId'] = app.flinkClusterId;
+          break;
+        case DeployMode.YARN_SESSION:
+          defaultParams['yarnSessionClusterId'] = app.flinkClusterId;
+          break;
+        case DeployMode.KUBERNETES_SESSION:
+          defaultParams['k8sSessionClusterId'] = app.flinkClusterId;
+          break;
+        default:
+          break;
       }
       setFieldsValue(defaultParams);
       app.args && programArgRef.value?.setContent(app.args);
@@ -128,13 +138,10 @@
     const formData = new FormData();
     formData.append('file', data.file);
     try {
-      const path = await fetchUpload(formData);
+      const response = await fetchUpload(formData);
       uploadJar.value = data.file.name;
-      const res = await fetchMain({
-        jar: path,
-      });
       uploadLoading.value = false;
-      setFieldsValue({ mainClass: res, jar: unref(uploadJar) });
+      setFieldsValue({ mainClass: response.mainClass, jar: unref(uploadJar) });
     } catch (error) {
       console.error(error);
       uploadLoading.value = false;

@@ -17,8 +17,8 @@
 
 package org.apache.streampark.common.util
 
-import org.apache.streampark.common.Constant
-import org.apache.streampark.common.conf.ConfigKeys
+import org.apache.streampark.common.constants.Constants
+import org.apache.streampark.common.util.Implicits._
 
 import redis.clients.jedis._
 import redis.clients.jedis.exceptions.JedisConnectionException
@@ -27,7 +27,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 import scala.annotation.meta.getter
 import scala.annotation.tailrec
-import scala.collection.convert.ImplicitConversions._
 import scala.util.Random
 
 object RedisClient extends Logger {
@@ -93,7 +92,7 @@ object RedisClient extends Logger {
    * @return
    */
   def createJedisPool(endpoint: RedisEndpoint): JedisPool = {
-    val endpointEn: RedisEndpoint = endpoint.copy(auth = Constant.DEFAULT_DATAMASK_STRING)
+    val endpointEn: RedisEndpoint = endpoint.copy(auth = Constants.DEFAULT_DATAMASK_STRING)
     logInfo(s"[StreamPark] RedisClient: createJedisPool with $endpointEn ")
     new JedisPool(
       poolConfig,

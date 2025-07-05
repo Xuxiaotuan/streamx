@@ -19,8 +19,9 @@ package org.apache.streampark.console.core.service;
 
 import org.apache.streampark.console.base.domain.RestRequest;
 import org.apache.streampark.console.base.domain.RestResponse;
-import org.apache.streampark.console.core.entity.Application;
+import org.apache.streampark.console.core.entity.FlinkApplication;
 import org.apache.streampark.console.core.entity.Project;
+import org.apache.streampark.console.core.enums.GitAuthorizedErrorEnum;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -30,119 +31,143 @@ import java.util.Map;
 
 public interface ProjectService extends IService<Project> {
 
-  /**
-   * Create a new instance.
-   *
-   * @param project Project to be created
-   * @return RestResponse
-   */
-  RestResponse create(Project project);
+    /**
+     * Create a new instance.
+     *
+     * @param project Project to be created
+     * @return RestResponse
+     */
+    RestResponse create(Project project);
 
-  /**
-   * Update the given Project
-   *
-   * @param projectParam The project to be updated
-   * @return whether the update is successful
-   */
-  boolean update(Project projectParam);
+    boolean checkExists(Project project);
 
-  /**
-   * remove the given project by project id
-   *
-   * @param id project id
-   * @return whether the remove is successful
-   */
-  boolean removeById(Long id);
+    /**
+     * Update the given Project
+     *
+     * @param projectParam The project to be updated
+     * @return whether the update is successful
+     */
+    boolean update(Project projectParam);
 
-  /**
-   * Retrieves a page of {@link Project} objects based on the provided parameters.
-   *
-   * @param project @param applicationLog The {@link Project} object containing the search criteria.
-   * @param restRequest @param request The {@link RestRequest} object used for pagination and
-   *     sorting.
-   * @return An {@link IPage} containing the retrieved {@link Project} objects.
-   */
-  IPage<Project> getPage(Project project, RestRequest restRequest);
+    /**
+     * remove the given project by project id
+     *
+     * @param id project id
+     * @return whether the remove is successful
+     */
+    boolean removeById(Long id);
 
-  /**
-   * Check whether the corresponding project exists through team id
-   *
-   * @param teamId Project contains team id
-   * @return whether the corresponding project exists
-   */
-  Boolean existsByTeamId(Long teamId);
+    /**
+     * Retrieves a page of {@link Project} objects based on the provided parameters.
+     *
+     * @param project @param applicationLog The {@link Project} object containing the search criteria.
+     * @param restRequest @param request The {@link RestRequest} object used for pagination and
+     *     sorting.
+     * @return An {@link IPage} containing the retrieved {@link Project} objects.
+     */
+    IPage<Project> getPage(Project project, RestRequest restRequest);
 
-  /**
-   * List all project by team id
-   *
-   * @param teamId Project contains team id
-   * @return List of project
-   */
-  List<Project> listByTeamId(Long teamId);
+    /**
+     * Check whether the corresponding project exists through team id
+     *
+     * @param teamId Project contains team id
+     * @return whether the corresponding project exists
+     */
+    Boolean existsByTeamId(Long teamId);
 
-  /**
-   * Build the project
-   *
-   * @param id Project id
-   * @throws Exception
-   */
-  void build(Long id) throws Exception;
+    /**
+     * List all project by team id
+     *
+     * @param teamId Project contains team id
+     * @return List of project
+     */
+    List<Project> listByTeamId(Long teamId);
 
-  /**
-   * Get the construction log of the specified project
-   *
-   * @param id Project id
-   * @param startOffset startOffset
-   * @return RestResponse
-   */
-  RestResponse getBuildLog(Long id, Long startOffset);
+    /**
+     * Build the project
+     *
+     * @param id Project id
+     * @throws Exception
+     */
+    void build(Long id) throws Exception;
 
-  /**
-   * List all modules of the specified project
-   *
-   * @param id Project id
-   * @return List of modules
-   */
-  List<String> listModules(Long id);
+    /**
+     * Get the construction log of the specified project
+     *
+     * @param id Project id
+     * @param startOffset startOffset
+     * @return RestResponse
+     */
+    RestResponse getBuildLog(Long id, Long startOffset);
 
-  /**
-   * List all Jars of the specified project
-   *
-   * @param project Project
-   * @return List of Jars
-   */
-  List<String> listJars(Project project);
+    /**
+     * List all modules of the specified project
+     *
+     * @param id Project id
+     * @return List of modules
+     */
+    List<String> listModules(Long id);
 
-  /**
-   * List all project configs of the specified project
-   *
-   * @param project Project
-   * @return List of configs
-   */
-  List<Map<String, Object>> listConf(Project project);
+    /**
+     * List all Jars of the specified project
+     *
+     * @param project Project
+     * @return List of Jars
+     */
+    List<String> listJars(Project project);
 
-  /**
-   * Get the configuration path of Application
-   *
-   * @param id Project id
-   * @param module Module
-   * @return Application config path
-   */
-  String getAppConfPath(Long id, String module);
+    /**
+     * List all project configs of the specified project
+     *
+     * @param project Project
+     * @return List of configs
+     */
+    List<Map<String, Object>> listConf(Project project);
 
-  /**
-   * List all Application of the specified project
-   *
-   * @param project Project
-   * @return List of Applications
-   */
-  List<Application> listApps(Project project);
+    /**
+     * Get the configuration path of Application
+     *
+     * @param id Project id
+     * @param module Module
+     * @return Application config path
+     */
+    String getAppConfPath(Long id, String module);
 
-  /**
-   * Check whether the corresponding project exists
-   *
-   * @param project Project
-   * @return whether the corresponding project exists
-   */
-  boolean exists(Project project);
+    /**
+     * List all Application of the specified project
+     *
+     * @param project Project
+     * @return List of Applications
+     */
+    List<FlinkApplication> listApps(Project project);
+
+    /**
+     * Check whether the corresponding project exists
+     *
+     * @param project Project
+     * @return whether the corresponding project exists
+     */
+    boolean exists(Project project);
+
+    /**
+     * Gets branch information under the project
+     *
+     * @param project Project
+     * @return branch information under the project
+     */
+    List<String> getAllBranches(Project project);
+
+    /**
+     * Check git
+     *
+     * @param project Project
+     * @return Check git
+     */
+    GitAuthorizedErrorEnum gitCheck(Project project);
+
+    List<String> getAllTags(Project project);
+
+    void updateBuildTime(Long id);
+
+    void updateBuildState(Long id, int state);
 }

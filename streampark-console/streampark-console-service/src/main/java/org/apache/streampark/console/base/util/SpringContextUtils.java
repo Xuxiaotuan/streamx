@@ -20,40 +20,57 @@ package org.apache.streampark.console.base.util;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Nonnull;
+
+import java.lang.annotation.Annotation;
+import java.util.Map;
+
 @Component
-public class SpringContextUtils implements ApplicationContextAware {
+public class SpringContextUtils implements ApplicationContextAware, AutoCloseable {
 
-  private static ApplicationContext applicationContext;
+    private static ApplicationContext applicationContext;
 
-  @Override
-  public synchronized void setApplicationContext(ApplicationContext applicationContext)
-      throws BeansException {
-    SpringContextUtils.applicationContext = applicationContext;
-  }
+    @Override
+    public synchronized void setApplicationContext(@Nonnull ApplicationContext applicationContext) throws BeansException {
+        SpringContextUtils.applicationContext = applicationContext;
+    }
 
-  public static Object getBean(String name) {
-    return applicationContext.getBean(name);
-  }
+    public static Object getBean(String name) {
+        return applicationContext.getBean(name);
+    }
 
-  public static <T> T getBean(Class<T> clazz) {
-    return applicationContext.getBean(clazz);
-  }
+    public static <T> T getBean(Class<T> clazz) {
+        return applicationContext.getBean(clazz);
+    }
 
-  public static <T> T getBean(String name, Class<T> requiredType) {
-    return applicationContext.getBean(name, requiredType);
-  }
+    public static <T> T getBean(String name, Class<T> requiredType) {
+        return applicationContext.getBean(name, requiredType);
+    }
 
-  public static boolean containsBean(String name) {
-    return applicationContext.containsBean(name);
-  }
+    public static boolean containsBean(String name) {
+        return applicationContext.containsBean(name);
+    }
 
-  public static boolean isSingleton(String name) {
-    return applicationContext.isSingleton(name);
-  }
+    public static boolean isSingleton(String name) {
+        return applicationContext.isSingleton(name);
+    }
 
-  public static Class<?> getType(String name) {
-    return applicationContext.getType(name);
-  }
+    public static Class<?> getType(String name) {
+        return applicationContext.getType(name);
+    }
+
+    public static Map<String, Object> getBeansWithAnnotation(Class<? extends Annotation> annotationType) {
+        return applicationContext.getBeansWithAnnotation(annotationType);
+    }
+
+    /**
+     * Close this application context, destroying all beans in its bean factory.
+     */
+    @Override
+    public void close() {
+        ((AbstractApplicationContext) applicationContext).close();
+    }
 }

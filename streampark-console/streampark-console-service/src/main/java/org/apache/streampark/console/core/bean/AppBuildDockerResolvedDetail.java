@@ -22,7 +22,8 @@ import org.apache.streampark.flink.packer.pipeline.DockerPullSnapshot;
 import org.apache.streampark.flink.packer.pipeline.DockerPushSnapshot;
 import org.apache.streampark.flink.packer.pipeline.DockerResolvedSnapshot;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import javax.annotation.Nullable;
@@ -33,105 +34,118 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /** View for DockerResolveProgress */
-@Data
+@Getter
+@Setter
 @Accessors(chain = true)
 public class AppBuildDockerResolvedDetail {
 
-  @Nullable private ImagePull pull;
-  @Nullable private ImageBuild build;
-  @Nullable private ImagePush push;
+    @Nullable
+    private ImagePull pull;
+    @Nullable
+    private ImageBuild build;
+    @Nullable
+    private ImagePush push;
 
-  public static AppBuildDockerResolvedDetail of(@Nullable DockerResolvedSnapshot snapshot) {
-    AppBuildDockerResolvedDetail detail = new AppBuildDockerResolvedDetail();
-    if (snapshot == null) {
-      return detail;
+    public static AppBuildDockerResolvedDetail of(@Nullable DockerResolvedSnapshot snapshot) {
+        AppBuildDockerResolvedDetail detail = new AppBuildDockerResolvedDetail();
+        if (snapshot == null) {
+            return detail;
+        }
+        return detail
+            .setPull(ImagePull.of(snapshot.pull()))
+            .setBuild(ImageBuild.of(snapshot.build()))
+            .setPush(ImagePush.of(snapshot.push()));
     }
-    return detail
-        .setPull(ImagePull.of(snapshot.pull()))
-        .setBuild(ImageBuild.of(snapshot.build()))
-        .setPush(ImagePush.of(snapshot.push()));
-  }
 
-  @Data
-  @Accessors(chain = true)
-  public static class ImagePull {
-    private List<ImageLayer> layers;
-    private Date st;
+    @Getter
+    @Setter
+    @Accessors(chain = true)
+    public static class ImagePull {
 
-    public static ImagePull of(DockerPullSnapshot snapshot) {
-      if (snapshot == null) {
-        return null;
-      }
-      return new ImagePull()
-          .setSt(new Date(snapshot.emitTime()))
-          .setLayers(
-              snapshot.detailAsJava().stream()
-                  .map(
-                      e ->
-                          new ImageLayer()
-                              .setLayerId(e.layerId())
-                              .setStatus(e.status())
-                              .setCurrentMb(e.currentMb())
-                              .setTotalMb(e.totalMb())
-                              .setPercent(e.percent()))
-                  .sorted(Comparator.comparing(ImageLayer::getStatus).reversed())
-                  .collect(Collectors.toList()));
+        private List<ImageLayer> layers;
+        private Date st;
+
+        public static ImagePull of(DockerPullSnapshot snapshot) {
+            if (snapshot == null) {
+                return null;
+            }
+            return new ImagePull()
+                .setSt(new Date(snapshot.emitTime()))
+                .setLayers(
+                    snapshot.detailAsJava().stream()
+                        .map(
+                            e -> new ImageLayer()
+                                .setLayerId(e.layerId())
+                                .setStatus(e.status())
+                                .setCurrentMb(e.currentMb())
+                                .setTotalMb(e.totalMb())
+                                .setPercent(e.percent()))
+                        .sorted(Comparator.comparing(ImageLayer::getStatus)
+                            .reversed())
+                        .collect(Collectors.toList()));
+        }
     }
-  }
 
-  @Data
-  @Accessors(chain = true)
-  public static class ImageBuild {
-    private List<String> steps;
-    private Date st;
+    @Getter
+    @Setter
+    @Accessors(chain = true)
+    public static class ImageBuild {
 
-    public static ImageBuild of(DockerBuildSnapshot snapshot) {
-      if (snapshot == null) {
-        return null;
-      }
-      return new ImageBuild()
-          .setSt(new Date(snapshot.emitTime()))
-          .setSteps(
-              snapshot.detailAsJava().stream()
-                  .filter(e -> e.trim().startsWith("Step") || e.trim().startsWith("step"))
-                  .collect(Collectors.toList()));
+        private List<String> steps;
+        private Date st;
+
+        public static ImageBuild of(DockerBuildSnapshot snapshot) {
+            if (snapshot == null) {
+                return null;
+            }
+            return new ImageBuild()
+                .setSt(new Date(snapshot.emitTime()))
+                .setSteps(
+                    snapshot.detailAsJava().stream()
+                        .filter(e -> e.trim().startsWith("Step")
+                            || e.trim().startsWith("step"))
+                        .collect(Collectors.toList()));
+        }
     }
-  }
 
-  @Data
-  @Accessors(chain = true)
-  public static class ImagePush {
-    private List<ImageLayer> layers;
-    private Date st;
+    @Getter
+    @Setter
+    @Accessors(chain = true)
+    public static class ImagePush {
 
-    public static ImagePush of(DockerPushSnapshot snapshot) {
-      if (snapshot == null) {
-        return null;
-      }
-      return new ImagePush()
-          .setSt(new Date(snapshot.emitTime()))
-          .setLayers(
-              snapshot.detailAsJava().stream()
-                  .map(
-                      e ->
-                          new ImageLayer()
-                              .setLayerId(e.layerId())
-                              .setStatus(e.status())
-                              .setCurrentMb(e.currentMb())
-                              .setTotalMb(e.totalMb())
-                              .setPercent(e.percent()))
-                  .sorted(Comparator.comparing(ImageLayer::getStatus).reversed())
-                  .collect(Collectors.toList()));
+        private List<ImageLayer> layers;
+        private Date st;
+
+        public static ImagePush of(DockerPushSnapshot snapshot) {
+            if (snapshot == null) {
+                return null;
+            }
+            return new ImagePush()
+                .setSt(new Date(snapshot.emitTime()))
+                .setLayers(
+                    snapshot.detailAsJava().stream()
+                        .map(
+                            e -> new ImageLayer()
+                                .setLayerId(e.layerId())
+                                .setStatus(e.status())
+                                .setCurrentMb(e.currentMb())
+                                .setTotalMb(e.totalMb())
+                                .setPercent(e.percent()))
+                        .sorted(Comparator.comparing(ImageLayer::getStatus)
+                            .reversed())
+                        .collect(Collectors.toList()));
+        }
     }
-  }
 
-  @Data
-  @Accessors(chain = true)
-  public static class ImageLayer {
-    private String layerId;
-    private String status;
-    private Double currentMb;
-    private Double totalMb;
-    private Double percent;
-  }
+    @Getter
+    @Setter
+    @Accessors(chain = true)
+    public static class ImageLayer {
+
+        private String layerId;
+        private String status;
+        private Double currentMb;
+        private Double totalMb;
+        private Double percent;
+    }
 }

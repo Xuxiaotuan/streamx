@@ -14,36 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.streampark.common.util
+
+import org.apache.streampark.common.util.Implicits._
 
 import org.apache.commons.lang3.StringUtils
 
 import java.io._
 import java.net.{HttpURLConnection, URL}
 import java.time.{Duration, LocalDateTime}
-import java.util.{jar, Collection => JavaCollection, Map => JavaMap, Properties, UUID}
+import java.util.{jar, Properties, UUID}
 import java.util.concurrent.locks.LockSupport
 import java.util.jar.{JarFile, JarInputStream}
 
 import scala.annotation.tailrec
-import scala.collection.convert.ImplicitConversions._
 import scala.util.{Failure, Success, Try}
 
 object Utils extends Logger {
 
   private[this] lazy val OS = System.getProperty("os.name").toLowerCase
 
-  def requireNotNull(obj: Any, message: String): Unit = {
-    if (obj == null) {
-      throw new NullPointerException(message)
-    }
-  }
-
-  def requireNotNull(obj: Any): Unit = {
-    requireNotNull(obj, "this argument must not be null")
-  }
-
-  def requireNotEmpty(elem: Any): Boolean = {
+  def isNotEmpty(elem: Any): Boolean = {
     elem match {
       case null => false
       case x if x.isInstanceOf[Array[_]] => elem.asInstanceOf[Array[_]].nonEmpty
@@ -56,19 +48,7 @@ object Utils extends Logger {
     }
   }
 
-  def isEmpty(elem: Any): Boolean = !requireNotEmpty(elem)
-
-  def required(expression: Boolean): Unit = {
-    if (!expression) {
-      throw new IllegalArgumentException
-    }
-  }
-
-  def required(expression: Boolean, errorMessage: Any): Unit = {
-    if (!expression) {
-      throw new IllegalArgumentException(s"Requirement failed: ${errorMessage.toString}")
-    }
-  }
+  def isEmpty(elem: Any): Boolean = !isNotEmpty(elem)
 
   def uuid(): String = UUID.randomUUID().toString.replaceAll("-", "")
 
@@ -93,7 +73,8 @@ object Utils extends Logger {
 
   def getJarManifest(jarFile: File): jar.Manifest = {
     requireCheckJarFile(jarFile.toURL)
-    new JarInputStream(new BufferedInputStream(new FileInputStream(jarFile))).getManifest
+    new JarInputStream(new BufferedInputStream(new FileInputStream(jarFile)))
+      .using(_.getManifest)
   }
 
   def getJarManClass(jarFile: File): String = {
@@ -112,7 +93,8 @@ object Utils extends Logger {
   def isWindows: Boolean = OS.indexOf("windows") >= 0
 
   /** if any blank strings exist */
-  def isAnyBank(items: String*): Boolean = items == null || items.exists(StringUtils.isBlank)
+  def isAnyBank(items: String*): Boolean =
+    items == null || items.exists(StringUtils.isBlank)
 
   /**
    * calculate the percentage of num1 / num2, the result range from 0 to 100, with one small digit
@@ -133,20 +115,19 @@ object Utils extends Logger {
   }
 
   def close(closeable: AutoCloseable*)(implicit func: Throwable => Unit = null): Unit = {
-    closeable.foreach(
-      c => {
-        try {
-          if (c != null) {
-            c match {
-              case flushable: Flushable => flushable.flush()
-              case _ =>
-            }
-            c.close()
+    closeable.foreach(c => {
+      try {
+        if (c != null) {
+          c match {
+            case flushable: Flushable => flushable.flush()
+            case _ =>
           }
-        } catch {
-          case e: Throwable if func != null => func(e)
+          c.close()
         }
-      })
+      } catch {
+        case e: Throwable if func != null => func(e)
+      }
+    })
   }
 
   @tailrec
@@ -164,7 +145,7 @@ object Utils extends Logger {
     }
   }
 
-  def checkHttpURL(urlString: String) = {
+  def checkHttpURL(urlString: String): Boolean = {
     Try {
       val url = new URL(urlString)
       val connection = url.openConnection.asInstanceOf[HttpURLConnection]
@@ -184,7 +165,7 @@ object Utils extends Logger {
     println("                                       /_/                        \n\n")
     println("    Version:  2.2.0-SNAPSHOT                                          ")
     println("    WebSite:  https://streampark.apache.org                           ")
-    println("    GitHub :  https://github.com/apache/incubator-streampark                    ")
+    println("    GitHub :  https://github.com/apache/streampark                    ")
     println(s"    Info   :  $info                                 ")
     println(s"    Time   :  ${LocalDateTime.now}              \n\n")
     // scalastyle:on println

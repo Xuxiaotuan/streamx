@@ -17,53 +17,30 @@
   -->
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.apache.streampark.console.core.mapper.VariableMapper">
-    <resultMap id="VariableMap" type="org.apache.streampark.console.core.entity.Variable">
-        <result column="id" jdbcType="BIGINT" property="id"/>
-        <result column="variable_code" jdbcType="VARCHAR" property="variableCode"/>
-        <result column="variable_value" jdbcType="VARCHAR" property="variableValue"/>
-        <result column="description" jdbcType="VARCHAR" property="description"/>
-        <result column="creator_id" jdbcType="BIGINT" property="creatorId"/>
-        <result column="desensitization" jdbcType="BOOLEAN" property="desensitization"/>
-        <result column="team_id" jdbcType="BIGINT" property="teamId"/>
-        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
-        <result column="modify_time" jdbcType="TIMESTAMP" property="modifyTime"/>
-    </resultMap>
-
     <select id="selectPage" resultType="org.apache.streampark.console.core.entity.Variable" parameterType="org.apache.streampark.console.core.entity.Variable">
         select
-            v.*,
-            u.username as creatorName
+        v.*,
+        u.username as creatorName
         from t_variable v
         inner join t_user u
         on v.creator_id = u.user_id
-        and v.team_id = ${variable.teamId}
+        and v.team_id = #{variable.teamId}
         <if test="variable.description != null and variable.description != ''">
-            and v.description like concat('%', '${variable.description}', '%')
+            <if test="_databaseId == 'mysql'">
+                and v.description like concat('%', #{variable.description},'%')
+            </if>
+            <if test="_databaseId == 'pgsql'">
+                and v.description like '%' || #{variable.description} || '%'
+            </if>
         </if>
         <if test="variable.variableCode != null and variable.variableCode != ''">
-            and v.variable_code like concat('%', '${variable.variableCode}', '%')
-        </if>
-    </select>
-
-    <select id="existsByTeamId" resultType="java.lang.Boolean" parameterType="java.lang.Long">
-        select
-            CASE
-                WHEN  count(1) > 0 THEN true ELSE false
-            END
-        from t_variable
-             where team_id = #{teamId}
-             limit 1
-    </select>
-
-    <select id="selectVarsByTeamId" resultType="org.apache.streampark.console.core.entity.Variable">
-        select *
-        from t_variable
-        <where>
-            team_id = #{teamId}
-            <if test="keyword != null and keyword != ''">
-                and variable_code like concat('%', '${keyword}', '%') or description like concat('%', '${keyword}', '%')
+            <if test="_databaseId == 'mysql'">
+                and v.variable_code like concat('%', #{variable.variableCode},'%')
             </if>
-        </where>
+            <if test="_databaseId == 'pgsql'">
+                and v.variable_code like '%' || #{variable.variableCode} || '%'
+            </if>
+        </if>
     </select>
 
 </mapper>

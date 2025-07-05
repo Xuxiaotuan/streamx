@@ -25,9 +25,7 @@ import org.apache.streampark.console.core.mapper.MessageMapper;
 import org.apache.streampark.console.core.service.MessageService;
 import org.apache.streampark.console.core.websocket.WebSocketEndpoint;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,22 +36,25 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(propagation = Propagation.SUPPORTS, readOnly = true, rollbackFor = Exception.class)
 public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
-    implements MessageService {
+    implements
+        MessageService {
 
-  @Override
-  public void push(Message message) {
-    save(message);
-    WebSocketEndpoint.pushNotice(message);
-  }
+    @Override
+    public void push(Message message) {
+        try {
+            save(message);
+            WebSocketEndpoint.pushNotice(message);
+        } catch (Exception e) {
+            log.error("Error pushing notice: {}", e.getMessage(), e);
+        }
+    }
 
-  @Override
-  public IPage<Message> getUnReadPage(NoticeTypeEnum noticeTypeEnum, RestRequest request) {
-    Page<Message> page = MybatisPager.getPage(request);
-    LambdaQueryWrapper<Message> queryWrapper =
-        new LambdaQueryWrapper<Message>()
+    @Override
+    public IPage<Message> getUnReadPage(NoticeTypeEnum noticeTypeEnum, RestRequest request) {
+        return this.lambdaQuery()
             .eq(Message::getIsRead, false)
             .orderByDesc(Message::getCreateTime)
-            .eq(Message::getType, noticeTypeEnum);
-    return this.baseMapper.selectPage(page, queryWrapper);
-  }
+            .eq(Message::getType, noticeTypeEnum)
+            .page(MybatisPager.getPage(request));
+    }
 }

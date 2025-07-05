@@ -16,7 +16,7 @@
  */
 import { FormSchema } from '/@/components/Table';
 import { computed, h, Ref, ref, unref } from 'vue';
-import { ExecModeEnum, JobTypeEnum, UseStrategyEnum } from '/@/enums/flinkEnum';
+import { DeployMode, JobTypeEnum, UseStrategyEnum } from '/@/enums/flinkEnum';
 import { useCreateAndEditSchema } from './useCreateAndEditSchema';
 import { renderSqlHistory } from './useFlinkRender';
 import { Alert } from 'ant-design-vue';
@@ -37,6 +37,7 @@ export const useEditStreamParkSchema = (
 ) => {
   const flinkSql = ref();
   const route = useRoute();
+  const appId = route.query.appId as string;
   const {
     alerts,
     flinkEnvs,
@@ -45,17 +46,17 @@ export const useEditStreamParkSchema = (
     getFlinkClusterSchemas,
     getFlinkFormOtherSchemas,
     getFlinkTypeSchema,
-    getExecutionModeSchema,
+    getDeployModeSchema,
     suggestions,
   } = useCreateAndEditSchema(dependencyRef, {
-    appId: route.query.appId as string,
+    appId: appId,
     mode: 'streampark',
   });
   const { createMessage } = useMessage();
   const [registerDifferentDrawer, { openDrawer: openDiffDrawer }] = useDrawer();
 
   async function handleChangeSQL(v: string) {
-    const res = await fetchFlinkSql({ id: v });
+    const res = await fetchFlinkSql({ id: v, appId: appId });
     flinkSql.value?.setContent(decodeByBase64(res.sql));
     console.log('res', flinkSql.value);
     unref(dependencyRef)?.setDefaultValue(JSON.parse(res.dependency || '{}'));
@@ -66,7 +67,7 @@ export const useEditStreamParkSchema = (
       createMessage.warning('Two versions must be selected for comparison');
       return Promise.reject('error, compareSQL array length less thatn 2');
     }
-    const res = await fetchFlinkSql({ id: compareSQL.join(',') });
+    const res = await fetchFlinkSql({ appId: appId, id: compareSQL.join(',') });
     const obj1 = res[0];
     const obj2 = res[1];
     const sql1 = decodeByBase64(obj1.sql);
@@ -116,7 +117,7 @@ export const useEditStreamParkSchema = (
   const getEditStreamParkFormSchema = computed((): FormSchema[] => {
     return [
       ...getFlinkTypeSchema.value,
-      ...getExecutionModeSchema.value,
+      ...getDeployModeSchema.value,
       ...getFlinkClusterSchemas.value,
       {
         field: 'flinkSqlHistory',
@@ -138,7 +139,7 @@ export const useEditStreamParkSchema = (
         label: 'Project',
         component: 'Input',
         render: ({ model }) => h(Alert, { message: model.projectName, type: 'info' }),
-        ifShow: ({ model, values }) => values.jobType != JobTypeEnum.SQL && model.projectName,
+        ifShow: ({ model, values }) => values.jobType == JobTypeEnum.JAR && model.projectName,
       },
       { field: 'project', label: 'ProjectId', component: 'Input', show: false },
 
@@ -147,7 +148,7 @@ export const useEditStreamParkSchema = (
         label: 'Application',
         component: 'Input',
         render: ({ model }) => h(Alert, { message: model.module, type: 'info' }),
-        ifShow: ({ model, values }) => values.jobType != JobTypeEnum.SQL && model.module,
+        ifShow: ({ model, values }) => values.jobType == JobTypeEnum.JAR && model.module,
       },
       { field: 'configId', label: 'configId', component: 'Input', show: false },
       { field: 'config', label: '', component: 'Input', show: false },
@@ -157,7 +158,7 @@ export const useEditStreamParkSchema = (
         label: 'Application conf',
         component: 'Input',
         slot: 'appConf',
-        ifShow: ({ values }) => values.jobType != JobTypeEnum.SQL,
+        ifShow: ({ values }) => values.jobType == JobTypeEnum.JAR,
       },
       {
         field: 'compareConf',
@@ -179,7 +180,7 @@ export const useEditStreamParkSchema = (
         component: 'Switch',
         slot: 'useSysHadoopConf',
         defaultValue: false,
-        ifShow: ({ values }) => values.executionMode == ExecModeEnum.KUBERNETES_APPLICATION,
+        ifShow: ({ values }) => values.deployMode == DeployMode.KUBERNETES_APPLICATION,
       },
       ...getFlinkFormOtherSchemas.value,
     ];

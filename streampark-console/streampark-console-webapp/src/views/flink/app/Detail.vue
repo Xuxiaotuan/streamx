@@ -14,48 +14,42 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<script lang="ts">
-  import { defineComponent } from 'vue';
-  import { AppStateEnum, ExecModeEnum } from '/@/enums/flinkEnum';
+<script setup lang="ts" name="ApplicationDetail">
+  import { DeployMode } from '/@/enums/flinkEnum';
   import { useI18n } from '/@/hooks/web/useI18n';
   import { fetchAppExternalLink } from '/@/api/setting/externalLink';
   import { ExternalLink } from '/@/api/setting/types/externalLink.type';
-  export default defineComponent({
-    name: 'ApplicationDetail',
-  });
-</script>
-<script setup lang="ts" name="ApplicationDetail">
+  import { useModal } from '/@/components/Modal';
   import { PageWrapper } from '/@/components/Page';
   import { Description, useDescription } from '/@/components/Description';
   import { Icon } from '/@/components/Icon';
   import { useRoute, useRouter } from 'vue-router';
-  import { fetchBackUps, fetchGet, fetchOptionLog, fetchYarn } from '/@/api/flink/app';
-  import { onUnmounted, reactive, h, unref, ref, onMounted, computed } from 'vue';
-  import { useIntervalFn, useClipboard } from '@vueuse/core';
+  import { fetchGet, fetchOptionLog, fetchYarn } from '/@/api/flink/app';
+  import { onUnmounted, reactive, h, ref, onMounted } from 'vue';
+  import { useIntervalFn } from '@vueuse/core';
   import { AppListRecord } from '/@/api/flink/app.type';
   import { Tooltip, Divider, Space } from 'ant-design-vue';
   import { handleView } from './utils';
   import { Button } from '/@/components/Button';
   import { getDescSchema } from './data/detail.data';
-  import { fetchCheckToken, fetchCopyCurl } from '/@/api/system/token';
-  import { useMessage } from '/@/hooks/web/useMessage';
-  import { baseUrl } from '/@/api';
   import { fetchListVer } from '/@/api/flink/config';
-  import { fetchSavePonitHistory } from '/@/api/flink/savepoint';
+  import { fetchSavePointHistory } from '/@/api/flink/savepoint';
   import Mergely from './components/Mergely.vue';
   import DetailTab from './components/AppDetail/DetailTab.vue';
+  import RequestModal from './components/RequestModal';
   import { createDetailProviderContext } from './hooks/useDetailContext';
   import { useDrawer } from '/@/components/Drawer';
   import { LinkBadge } from '/@/components/LinkBadge';
 
+  defineOptions({
+    name: 'ApplicationDetail',
+  });
   const route = useRoute();
   const router = useRouter();
 
-  const { Swal, createMessage } = useMessage();
-  const { copy } = useClipboard({
-    legacy: true,
-  });
   const { t } = useI18n();
+
+  const appNotRunning = ref(true);
 
   const yarn = ref('');
   const externalLinks = ref<ExternalLink[]>([]);
@@ -85,54 +79,46 @@
             Button,
             {
               type: 'primary',
-              shape: 'round',
+              size: 'small',
               class: 'mx-3px px-5px',
-              onClick: () => handleCopyCurl('/flink/app/start'),
+              onClick: () =>
+                openApiModal(true, {
+                  name: 'flinkStart',
+                  app,
+                }),
             },
-            () => [
-              h(Icon, { icon: 'ant-design:copy-outlined' }),
-              t('flink.app.detail.copyStartcURL'),
-            ],
+            () => [t('flink.app.detail.copyStartcURL')],
           ),
           h(
             Button,
             {
               type: 'primary',
-              shape: 'round',
+              size: 'small',
               class: 'mx-3px px-5px',
-              onClick: () => handleCopyCurl('/flink/app/cancel'),
+              onClick: () => {
+                openApiModal(true, {
+                  name: 'flinkCancel',
+                  app,
+                });
+              },
             },
-            () => [
-              h(Icon, { icon: 'ant-design:copy-outlined' }),
-              t('flink.app.detail.copyCancelcURL'),
-            ],
-          ),
-          h(
-            Button,
-            {
-              type: 'link',
-              shape: 'round',
-              class: 'mx-3px px-5px',
-              onClick: () => handleDocPage(),
-            },
-            () => [
-              h(Icon, { icon: 'ant-design:link-outlined' }),
-              t('flink.app.detail.apiDocCenter'),
-            ],
+            () => [t('flink.app.detail.copyCancelcURL')],
           ),
         ],
       },
     ],
     data: app,
-    layout: 'vertical',
-    column: 3,
+    layout: 'horizontal',
+    column: 2,
+    size: 'small',
   });
 
   const [registerConfDrawer] = useDrawer();
+  const [registerOpenApi, { openModal: openApiModal }] = useModal();
 
   /* Flink Web UI */
   function handleFlinkView() {
-    handleView(app as any, unref(yarn));
+    handleView(app as any);
   }
 
   const { pause } = useIntervalFn(
@@ -151,17 +137,16 @@
     // Get data for the first time
     if (Object.keys(app).length == 0) {
       if (
-        [
-          ExecModeEnum.YARN_PER_JOB,
-          ExecModeEnum.YARN_SESSION,
-          ExecModeEnum.YARN_APPLICATION,
-        ].includes(res.executionMode)
+        [DeployMode.YARN_PER_JOB, DeployMode.YARN_SESSION, DeployMode.YARN_APPLICATION].includes(
+          res.deployMode,
+        )
       ) {
-        handleYarn();
+        await handleYarn();
       }
-      handleDetailTabs();
+      await handleDetailTabs();
     }
     Object.assign(app, res);
+    appNotRunning.value = !app.appControl.allowView;
   }
 
   async function handleDetailTabs() {
@@ -172,54 +157,17 @@
     };
 
     const confList = await fetchListVer(commonParams);
-    const pointHistory = await fetchSavePonitHistory(commonParams);
-    const backupList = await fetchBackUps(commonParams);
+    const pointHistory = await fetchSavePointHistory(commonParams);
     const optionList = await fetchOptionLog(commonParams);
 
     if (confList.records.length > 0) detailTabs.showConf = true;
     if (pointHistory.records.length > 0) detailTabs.showSaveOption = true;
-    if (backupList.records.length > 0) detailTabs.showBackup = true;
     if (optionList.records.length > 0) detailTabs.showOptionLog = true;
   }
 
   /* Get yarn data */
   async function handleYarn() {
     yarn.value = await fetchYarn();
-  }
-
-  /* copyCurl */
-  async function handleCopyCurl(urlPath) {
-    const resp = await fetchCheckToken({});
-    const result = parseInt(resp);
-    if (result === 0) {
-      Swal.fire({
-        icon: 'error',
-        title: t('flink.app.detail.nullAccessToken'),
-        showConfirmButton: true,
-        timer: 3500,
-      });
-    } else if (result === 1) {
-      Swal.fire({
-        icon: 'error',
-        title: t('flink.app.detail.invalidAccessToken'),
-        showConfirmButton: true,
-        timer: 3500,
-      });
-    } else {
-      const res = await fetchCopyCurl({
-        appId: app.id,
-        baseUrl: baseUrl(),
-        path: urlPath,
-      });
-      copy(res);
-      createMessage.success(t('flink.app.detail.detailTab.copySuccess'));
-    }
-  }
-
-  /* Documentation page */
-  function handleDocPage() {
-    const res = window.origin + '/doc.html';
-    window.open(res);
   }
 
   async function getExternalLinks() {
@@ -234,44 +182,43 @@
   onUnmounted(() => {
     pause();
   });
-
-  const appNotRunning = computed(
-    () => app.state !== AppStateEnum.RUNNING || (yarn.value === null && app.flinkRestUrl === null),
-  );
 </script>
 <template>
-  <PageWrapper content-full-height content-background contentClass="p-24px">
-    <div class="mb-15px">
-      <span class="app-bar">{{ t('flink.app.detail.detailTitle') }}</span>
-      <Space class="-mt-8px">
-        <div v-for="link in externalLinks" :key="link.id">
-          <LinkBadge
-            :label="link.badgeLabel"
-            :redirect="link.renderedLinkUrl"
-            :color="link.badgeColor"
-            :message="link.badgeName"
-            :disabled="appNotRunning"
-          />
-        </div>
-      </Space>
-      <a-button type="primary" shape="circle" @click="router.back()" class="float-right -mt-8px">
-        <Icon icon="ant-design:arrow-left-outlined" />
-      </a-button>
-      <a-button
-        type="primary"
-        @click="handleFlinkView"
-        :disabled="appNotRunning"
-        class="float-right -mt-8px mr-20px"
-      >
-        <Icon icon="ant-design:cloud-outlined" />
-        {{ t('flink.app.detail.flinkWebUi') }}
-      </a-button>
-    </div>
-    <Description @register="registerDescription" />
-    <Divider class="mt-20px -mb-17px" />
-    <DetailTab :app="app" :tabConf="detailTabs" />
+  <PageWrapper content-full-height content-background>
+    <div class="detail-pad">
+      <div class="mb-15px">
+        <span class="app-bar">{{ t('flink.app.detail.detailTitle') }}</span>
+        <Space class="-mt-8px">
+          <div v-for="link in externalLinks" :key="link.id">
+            <LinkBadge
+              :label="link.badgeLabel"
+              :redirect="link.renderedLinkUrl"
+              :color="link.badgeColor"
+              :message="link.badgeName"
+              :disabled="appNotRunning"
+            />
+          </div>
+        </Space>
+        <a-button type="primary" shape="circle" @click="router.back()" class="float-right -mt-8px">
+          <Icon icon="ant-design:arrow-left-outlined" />
+        </a-button>
+        <a-button
+          type="primary"
+          @click="handleFlinkView"
+          :disabled="appNotRunning"
+          class="float-right -mt-8px mr-20px"
+        >
+          <Icon icon="ant-design:cloud-outlined" />
+          {{ t('flink.app.detail.flinkWebUi') }}
+        </a-button>
+      </div>
+      <Description @register="registerDescription" />
+      <Divider class="mt-20px -mb-17px" />
+      <DetailTab :app="app" :tabConf="detailTabs" />
 
-    <Mergely @register="registerConfDrawer" :readOnly="true" />
+      <Mergely @register="registerConfDrawer" :readOnly="true" />
+      <RequestModal @register="registerOpenApi" />
+    </div>
   </PageWrapper>
 </template>
 <style lang="less">

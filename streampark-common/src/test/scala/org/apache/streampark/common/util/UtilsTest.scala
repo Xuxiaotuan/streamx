@@ -17,10 +17,7 @@
 
 package org.apache.streampark.common.util
 
-import org.junit.jupiter.api.{Assertions, Test}
-import org.junit.jupiter.api.Assertions.{assertDoesNotThrow, assertEquals, assertFalse, assertThrows, assertTrue}
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers._
 
 import java.io.IOException
 import java.net.URL
@@ -30,31 +27,31 @@ class UtilsTest extends AnyFunSuite {
 
   test("requiredNotNull should throw NullPointerException if argument is null") {
     val nullPointerException = intercept[NullPointerException] {
-      Utils.requireNotNull(null, "object can't be null")
+      AssertUtils.notNull(null, "object can't be null")
     }
     assert(nullPointerException.getMessage == "object can't be null")
   }
 
   test("requireNotEmpty should check if argument is not empty") {
-    assert(!Utils.requireNotEmpty(null))
-    assert(Utils.requireNotEmpty(Array(1)))
-    assert(Utils.requireNotEmpty("string"))
-    assert(Utils.requireNotEmpty(Seq("Seq")))
-    assert(Utils.requireNotEmpty(Iterable("Iterable")))
+    assert(!Utils.isNotEmpty(null))
+    assert(Utils.isNotEmpty(Array(1)))
+    assert(Utils.isNotEmpty("string"))
+    assert(Utils.isNotEmpty(Seq("Seq")))
+    assert(Utils.isNotEmpty(Iterable("Iterable")))
 
     val arrayList = new util.ArrayList[String](16)
     arrayList.add("arrayList")
-    assert(Utils.requireNotEmpty(arrayList))
+    assert(Utils.isNotEmpty(arrayList))
 
     val hashMap = new util.HashMap[String, String](16)
     hashMap.put("hash", "map")
-    assert(Utils.requireNotEmpty(hashMap))
-    assert(Utils.requireNotEmpty())
+    assert(Utils.isNotEmpty(hashMap))
+    assert(Utils.isNotEmpty())
   }
 
   test("required should throw IllegalArgumentException if condition is false") {
     val illegalArgumentException = intercept[IllegalArgumentException] {
-      Utils.required(false)
+      AssertUtils.required(false)
     }
     assert(illegalArgumentException.getMessage == null)
   }

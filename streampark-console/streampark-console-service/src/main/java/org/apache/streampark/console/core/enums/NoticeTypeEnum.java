@@ -17,26 +17,30 @@
 
 package org.apache.streampark.console.core.enums;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
+
 import java.util.Arrays;
 
 /** notification type */
 public enum NoticeTypeEnum {
-  /** exception */
-  EXCEPTION(1),
-  /** message */
-  MESSAGE(2);
 
-  private final int value;
+    /** exception */
+    EXCEPTION(1),
+    /** message */
+    MESSAGE(2);
 
-  public int get() {
-    return this.value;
-  }
+    @EnumValue
+    private final int value;
 
-  NoticeTypeEnum(int value) {
-    this.value = value;
-  }
+    public int get() {
+        return this.value;
+    }
 
-  public static NoticeTypeEnum of(Integer value) {
-    return Arrays.stream(values()).filter((x) -> x.value == value).findFirst().orElse(null);
-  }
+    NoticeTypeEnum(int value) {
+        this.value = value;
+    }
+
+    public static NoticeTypeEnum of(Integer value) {
+        return Arrays.stream(values()).filter((x) -> x.value == value).findFirst().orElse(null);
+    }
 }

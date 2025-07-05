@@ -31,8 +31,15 @@ export default {
   },
   flink: {
     application: '作业管理',
-    flinkHome: 'Flink版本',
+    flinkHome: 'Flink 版本',
     flinkCluster: '集群管理',
+  },
+  spark: {
+    application: '作业管理',
+    sparkHome: 'Spark 版本',
+    createApplication: '创建作业',
+    updateApplication: '更新作业',
+    applicationDetail: '作业详情',
   },
   setting: {
     menu: '设置中心',

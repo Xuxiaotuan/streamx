@@ -209,12 +209,11 @@
     }
 
     .ant-drawer-body {
-      height: calc(100% - @header-height);
       padding: 0;
+      height: calc(100% - @header-height);
       background-color: @component-background;
 
       .scrollbar__wrap {
-        padding: 16px !important;
         margin-bottom: 0 !important;
       }
 

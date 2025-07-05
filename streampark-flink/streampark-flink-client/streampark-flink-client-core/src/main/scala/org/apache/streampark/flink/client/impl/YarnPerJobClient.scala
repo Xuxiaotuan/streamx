@@ -17,29 +17,26 @@
 
 package org.apache.streampark.flink.client.impl
 
-import org.apache.streampark.common.util.Utils
+import org.apache.streampark.common.util.Implicits._
 import org.apache.streampark.flink.client.`trait`.YarnClientTrait
 import org.apache.streampark.flink.client.bean._
 import org.apache.streampark.flink.util.FlinkUtils
 
-import org.apache.flink.client.deployment.DefaultClusterClientServiceLoader
-import org.apache.flink.client.program.{ClusterClient, PackagedProgram}
+import org.apache.flink.client.program.PackagedProgram
 import org.apache.flink.configuration.{Configuration, DeploymentOptions}
-import org.apache.flink.yarn.{YarnClusterClientFactory, YarnClusterDescriptor}
+import org.apache.flink.yarn.YarnClusterDescriptor
 import org.apache.flink.yarn.configuration.YarnDeploymentTarget
 import org.apache.flink.yarn.entrypoint.YarnJobClusterEntrypoint
 import org.apache.hadoop.fs.{Path => HadoopPath}
 import org.apache.hadoop.yarn.api.records.ApplicationId
 
-import java.io.File
 import java.lang.{Boolean => JavaBool}
-
-import scala.collection.convert.ImplicitConversions._
 
 /** yarn PerJob mode submit */
 object YarnPerJobClient extends YarnClientTrait {
 
   override def setConfig(submitRequest: SubmitRequest, flinkConfig: Configuration): Unit = {
+    super.setConfig(submitRequest, flinkConfig)
     // execution.target
     flinkConfig
       .safeSet(DeploymentOptions.TARGET, YarnDeploymentTarget.PER_JOB.getName)
@@ -56,74 +53,60 @@ object YarnPerJobClient extends YarnClientTrait {
   override def doSubmit(
       submitRequest: SubmitRequest,
       flinkConfig: Configuration): SubmitResponse = {
-
     val flinkHome = submitRequest.flinkVersion.flinkHome
 
-    val clusterClientServiceLoader = new DefaultClusterClientServiceLoader
-    val clientFactory =
-      clusterClientServiceLoader.getClusterClientFactory[ApplicationId](flinkConfig)
+    val (clusterSpecification, clusterDescriptor: YarnClusterDescriptor) =
+      getYarnClusterDeployDescriptor(flinkConfig, submitRequest.hadoopUser)
+    val flinkDistJar = FlinkUtils.getFlinkDistJar(flinkHome)
+    clusterDescriptor.setLocalJarPath(new HadoopPath(flinkDistJar))
+    clusterDescriptor.addShipFiles(List(new HadoopPath(s"$flinkHome/lib")))
+
     var packagedProgram: PackagedProgram = null
-    var clusterClient: ClusterClient[ApplicationId] = null
-
-    val clusterDescriptor = {
-      val clusterDescriptor =
-        clientFactory.createClusterDescriptor(flinkConfig).asInstanceOf[YarnClusterDescriptor]
-      val flinkDistJar = FlinkUtils.getFlinkDistJar(flinkHome)
-      clusterDescriptor.setLocalJarPath(new HadoopPath(flinkDistJar))
-      clusterDescriptor.addShipFiles(List(new File(s"$flinkHome/lib")))
-      clusterDescriptor
-    }
-
-    try {
-      clusterClient = {
-        val clusterSpecification = clientFactory.getClusterSpecification(flinkConfig)
-        logInfo(s"""
-                   |------------------------<<specification>>-------------------------
-                   |$clusterSpecification
-                   |------------------------------------------------------------------
-                   |""".stripMargin)
-
-        val programJobGraph = super.getJobGraph(submitRequest, flinkConfig)
-        packagedProgram = programJobGraph._1
-        val jobGraph = programJobGraph._2
-
-        logInfo(s"""
-                   |-------------------------<<applicationId>>------------------------
-                   |jobGraph getJobID: ${jobGraph.getJobID.toString}
-                   |__________________________________________________________________
-                   |""".stripMargin)
-        deployInternal(
-          clusterDescriptor,
-          clusterSpecification,
-          submitRequest.effectiveAppName,
-          classOf[YarnJobClusterEntrypoint].getName,
-          jobGraph,
-          true).getClusterClient
-
-      }
-      val applicationId = clusterClient.getClusterId
-      val jobManagerUrl = clusterClient.getWebInterfaceURL
+    val clusterClient = {
       logInfo(s"""
-                 |-------------------------<<applicationId>>------------------------
-                 |Flink Job Started: applicationId: $applicationId
-                 |__________________________________________________________________
+                 |------------------------<<specification>>-------------------------
+                 |$clusterSpecification
+                 |------------------------------------------------------------------
                  |""".stripMargin)
 
-      SubmitResponse(applicationId.toString, flinkConfig.toMap, jobManagerUrl = jobManagerUrl)
-    } finally {
-      if (submitRequest.safePackageProgram) {
-        Utils.close(packagedProgram)
-      }
-      Utils.close(clusterClient, clusterDescriptor)
+      val programJobGraph =
+        super.getJobGraph(flinkConfig, submitRequest, submitRequest.userJarFile)
+      packagedProgram = programJobGraph._1
+      val jobGraph = programJobGraph._2
+
+      logInfo(s"""
+                 |-------------------------<<applicationId>>------------------------
+                 |jobGraph getJobID: ${jobGraph.getJobID.toString}
+                 |__________________________________________________________________
+                 |""".stripMargin)
+      deployInternal(
+        clusterDescriptor,
+        clusterSpecification,
+        submitRequest.effectiveAppName,
+        classOf[YarnJobClusterEntrypoint].getName,
+        jobGraph,
+        true).getClusterClient
     }
+    val applicationId = clusterClient.getClusterId
+    val jobManagerUrl = clusterClient.getWebInterfaceURL
+    logInfo(s"""
+               |-------------------------<<applicationId>>------------------------
+               |Flink Job Started: applicationId: $applicationId
+               |__________________________________________________________________
+               |""".stripMargin)
+
+    val resp =
+      SubmitResponse(applicationId.toString, flinkConfig.toMap, jobManagerUrl = jobManagerUrl)
+    closeSubmit(submitRequest, packagedProgram, clusterClient, clusterDescriptor)
+    resp
   }
 
   override def doCancel(
       cancelRequest: CancelRequest,
       flinkConfig: Configuration): CancelResponse = {
     val response = super.doCancel(cancelRequest, flinkConfig)
-    val clusterClientFactory = new YarnClusterClientFactory
-    val clusterDescriptor = clusterClientFactory.createClusterDescriptor(flinkConfig)
+    val (yarnClusterId: ApplicationId, clusterDescriptor: YarnClusterDescriptor) =
+      getYarnClusterDescriptor(flinkConfig)
     clusterDescriptor.killCluster(ApplicationId.fromString(cancelRequest.clusterId))
     response
   }

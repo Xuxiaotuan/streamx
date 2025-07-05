@@ -189,23 +189,19 @@ log "$MAVEN_PROJECTBASEDIR"
 ##########################################################################################
 wrapperJarPath="$MAVEN_PROJECTBASEDIR/.mvn/wrapper/maven-wrapper.jar"
 javaSource="$MAVEN_PROJECTBASEDIR/.mvn/wrapper/MavenWrapperHelper.java"
-javaClass="$MAVEN_PROJECTBASEDIR/.mvn/wrapper/MavenWrapperHelper.class"
 wrapperProperties="$MAVEN_PROJECTBASEDIR/.mvn/wrapper/maven-wrapper.properties"
 # For Cygwin, switch paths to Windows format before running javac
 if $cygwin; then
   javaSource=$(cygpath --path --windows "$javaSource")
-  javaClass=$(cygpath --path --windows "$javaClass")
 fi
 
 if [ ! -e "$javaSource" ]; then
-  error "ERROR: $javaSource not exists."
+  echo "ERROR: $javaSource not exists."
   exit 1
 fi
 
-if [ ! -e "$javaClass" ]; then
-  log " - Compiling $javaClass starting ..."
-  ("$JAVA_HOME/bin/javac" "$javaSource")
-fi
+log " - Compiling $javaSource starting ..."
+"$JAVA_HOME/bin/javac" "$javaSource"
 
 if [ -r "$wrapperJarPath" ]; then
   log "Found $wrapperJarPath"

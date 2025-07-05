@@ -18,34 +18,36 @@
 package org.apache.streampark.console.core.metrics.flink;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class Overview {
 
-  private Integer taskmanagers;
+    private Integer taskmanagers;
 
-  @JsonProperty("slots-total")
-  private Integer slotsTotal;
+    @JsonProperty("slots-total")
+    private Integer slotsTotal;
 
-  @JsonProperty("slots-available")
-  private Integer slotsAvailable;
+    @JsonProperty("slots-available")
+    private Integer slotsAvailable;
 
-  @JsonProperty("jobs-running")
-  private Integer jobsRunning;
+    @JsonProperty("jobs-running")
+    private Integer jobsRunning;
 
-  @JsonProperty("jobs-finished")
-  private Integer jobsFinished;
+    @JsonProperty("jobs-finished")
+    private Integer jobsFinished;
 
-  @JsonProperty("jobs-cancelled")
-  private Integer jobsCancelled;
+    @JsonProperty("jobs-cancelled")
+    private Integer jobsCancelled;
 
-  @JsonProperty("jobs-failed")
-  private Integer jobsFailed;
+    @JsonProperty("jobs-failed")
+    private Integer jobsFailed;
 
-  @JsonProperty("flink-version")
-  private String flinkVersion;
+    @JsonProperty("flink-version")
+    private String flinkVersion;
 
-  @JsonProperty("flink-commit")
-  private String flinkCommit;
+    @JsonProperty("flink-commit")
+    private String flinkCommit;
 }

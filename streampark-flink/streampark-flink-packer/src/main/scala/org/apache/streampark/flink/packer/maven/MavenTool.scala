@@ -17,10 +17,11 @@
 
 package org.apache.streampark.flink.packer.maven
 
-import org.apache.streampark.common.Constant
 import org.apache.streampark.common.conf.{InternalConfigHolder, Workspace}
 import org.apache.streampark.common.conf.CommonConfig.{MAVEN_AUTH_PASSWORD, MAVEN_AUTH_USER, MAVEN_REMOTE_URL}
-import org.apache.streampark.common.util.{Logger, Utils}
+import org.apache.streampark.common.constants.Constants
+import org.apache.streampark.common.util.{AssertUtils, Logger, Utils}
+import org.apache.streampark.common.util.Implicits._
 
 import com.google.common.collect.Lists
 import org.apache.maven.plugins.shade.{DefaultShader, ShadeRequest}
@@ -44,15 +45,14 @@ import javax.annotation.{Nonnull, Nullable}
 
 import java.io.File
 import java.util
-import java.util.{List => JavaList, Set => JavaSet}
 
-import scala.collection.convert.ImplicitConversions._
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Try
 
 object MavenTool extends Logger {
 
-  private[this] lazy val plexusLog = new ConsoleLogger(PlexusLog.LEVEL_INFO, "streampark-maven")
+  private[this] lazy val plexusLog =
+    new ConsoleLogger(PlexusLog.LEVEL_INFO, "streampark-maven")
 
   private[this] val excludeArtifact = List(
     Artifact.of("org.apache.flink:force-shading:*"),
@@ -63,13 +63,13 @@ object MavenTool extends Logger {
     val builder =
       new RemoteRepository.Builder(
         "central",
-        Constant.DEFAULT,
+        Constants.DEFAULT,
         InternalConfigHolder.get(MAVEN_REMOTE_URL))
-    val remoteRepository =
-      if (
+    val remoteRepository = {
+      val buildState =
         InternalConfigHolder.get(MAVEN_AUTH_USER) == null || InternalConfigHolder.get(
           MAVEN_AUTH_PASSWORD) == null
-      ) {
+      if (buildState) {
         builder.build()
       } else {
         val authentication = new AuthenticationBuilder()
@@ -78,6 +78,7 @@ object MavenTool extends Logger {
           .build()
         builder.setAuthentication(authentication).build()
       }
+    }
     List(remoteRepository)
   }
 
@@ -102,9 +103,8 @@ object MavenTool extends Logger {
     // check userJarPath
     val uberJar = new File(outFatJarPath)
     require(
-      outFatJarPath.endsWith(Constant.JAR_SUFFIX) && !uberJar.isDirectory,
-      s"[StreamPark] streampark-packer: outFatJarPath($outFatJarPath) should be a JAR file."
-    )
+      outFatJarPath.endsWith(Constants.JAR_SUFFIX) && !uberJar.isDirectory,
+      s"[StreamPark] streampark-packer: outFatJarPath($outFatJarPath) should be a JAR file.")
     uberJar.delete()
     // resolve all jarLibs
     val jarSet = new util.HashSet[File]
@@ -133,7 +133,6 @@ object MavenTool extends Logger {
         transformer += manifest
       }
       req.setResourceTransformers(transformer.toList)
-      // issue: https://github.com/apache/incubator-streampark/issues/2350
       req.setFilters(List(new ShadeFilter))
       req.setRelocators(Lists.newArrayList())
       req
@@ -160,16 +159,17 @@ object MavenTool extends Logger {
       @Nonnull outFatJarPath: String): File = {
     val jarLibs = dependencyInfo.extJarLibs
     val arts = dependencyInfo.mavenArts
-    if (jarLibs.isEmpty && arts.isEmpty) {
-      throw new Exception(s"[StreamPark] streampark-packer: empty artifacts.")
-    }
+    AssertUtils.required(
+      !(jarLibs.isEmpty && arts.isEmpty),
+      s"[StreamPark] streampark-packer: empty artifacts.")
+
     val artFilePaths = resolveArtifacts(arts).map(_.getAbsolutePath)
     buildFatJar(mainClass, jarLibs ++ artFilePaths, outFatJarPath)
   }
 
   @throws[Exception]
-  def resolveArtifacts(mavenArtifact: Artifact): JavaList[File] = resolveArtifacts(
-    Set(mavenArtifact))
+  def resolveArtifacts(mavenArtifact: Artifact): JavaList[File] =
+    resolveArtifacts(Set(mavenArtifact))
 
   /**
    * Resolve the collectoin of artifacts, Artifacts will be download to ConfigConst.MAVEN_LOCAL_DIR
@@ -185,13 +185,12 @@ object MavenTool extends Logger {
     if (mavenArtifacts == null) List.empty[File]
     else {
       val (repoSystem, session) = getMavenEndpoint()
-      val artifacts = mavenArtifacts.map(
-        e => {
-          val artifact =
-            new DefaultArtifact(e.groupId, e.artifactId, e.classifier, "jar", e.version)
-          artifact.getProperties
-          artifact
-        })
+      val artifacts = mavenArtifacts.map(e => {
+        val artifact =
+          new DefaultArtifact(e.groupId, e.artifactId, e.classifier, "jar", e.version)
+        artifact.getProperties
+        artifact
+      })
       logInfo(s"start resolving dependencies: ${artifacts.mkString}")
 
       val remoteRepos = getRemoteRepos()
@@ -253,11 +252,12 @@ object MavenTool extends Logger {
     override def canFilter(jar: File): Boolean = true
 
     override def isFiltered(name: String): Boolean = {
-      if (name.startsWith("META-INF/")) {
-        if (name.endsWith(".SF") || name.endsWith(".DSA") || name.endsWith(".RSA")) {
-          logInfo(s"shade ignore file: $name")
-          return true
-        }
+      val isFilteredState =
+        name.startsWith("META-INF/") && name.endsWith(".SF") || name.endsWith(".DSA") || name
+          .endsWith(".RSA")
+      if (isFilteredState) {
+        logInfo(s"shade ignore file: $name")
+        return true
       }
       false
     }

@@ -17,8 +17,8 @@
 
 package org.apache.streampark.flink.packer
 
-import org.apache.streampark.common.Constant
 import org.apache.streampark.common.conf.Workspace
+import org.apache.streampark.common.constants.Constants
 import org.apache.streampark.common.util.Logger
 
 import org.apache.commons.io.FileUtils
@@ -30,7 +30,7 @@ import scala.util.Try
 /** Garbage resource collector during packing. */
 object PackerResourceGC extends Logger {
 
-  val appWorkspacePath: String = Workspace.local.APP_WORKSPACE
+  private val appWorkspacePath: String = Workspace.local.APP_WORKSPACE
 
   /**
    * Start a building legacy resources collection process.
@@ -58,7 +58,8 @@ object PackerResourceGC extends Logger {
   }
 
   private def findLastModifiedOfSubFile(file: File): Array[(File, Long)] = {
-    val isApplicationMode = file.listFiles.map(_.getName).exists(_.contains(Constant.JAR_SUFFIX))
+    val isApplicationMode =
+      file.listFiles.map(_.getName).exists(_.contains(Constants.JAR_SUFFIX))
     if (isApplicationMode) {
       Array(file -> file.listFiles.map(_.lastModified).max)
     } else {

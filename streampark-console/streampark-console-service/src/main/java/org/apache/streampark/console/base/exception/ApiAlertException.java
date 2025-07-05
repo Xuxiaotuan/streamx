@@ -34,48 +34,63 @@ import java.util.Objects;
  */
 public class ApiAlertException extends AbstractApiException {
 
-  public ApiAlertException(String message) {
-    super(message, ResponseCode.CODE_FAIL_ALERT);
-  }
-
-  public ApiAlertException(Throwable cause) {
-    super(cause, ResponseCode.CODE_FAIL_ALERT);
-  }
-
-  public ApiAlertException(String message, Throwable cause) {
-    super(message, cause, ResponseCode.CODE_FAIL_ALERT);
-  }
-
-  public static void throwIfNull(Object object, String errorMsgFmt, Object... args) {
-    if (Objects.isNull(object)) {
-      if (args == null || args.length < 1) {
-        throw new ApiAlertException(errorMsgFmt);
-      }
-      throw new ApiAlertException(String.format(errorMsgFmt, args));
+    public ApiAlertException(String message) {
+        super(message, ResponseCode.CODE_FAIL_ALERT);
     }
-  }
 
-  public static void throwIfNotNull(Object object, String errorMsgFmt, Object... args) {
-    if (!Objects.isNull(object)) {
-      if (args == null || args.length < 1) {
-        throw new ApiAlertException(errorMsgFmt);
-      }
-      throw new ApiAlertException(String.format(errorMsgFmt, args));
+    public ApiAlertException(Throwable cause) {
+        super(cause, ResponseCode.CODE_FAIL_ALERT);
     }
-  }
 
-  public static void throwIfFalse(boolean expression, String errorMessage) {
-    if (!expression) {
-      throw new ApiAlertException(errorMessage);
+    public ApiAlertException(String message, Throwable cause) {
+        super(message, cause, ResponseCode.CODE_FAIL_ALERT);
     }
-  }
 
-  public static void throwIfTrue(boolean expression, String errorMsgFmt, Object... args) {
-    if (expression) {
-      if (args == null || args.length < 1) {
-        throw new ApiAlertException(errorMsgFmt);
-      }
-      throw new ApiAlertException(String.format(errorMsgFmt, args));
+    public static void throwIfNull(Object object, String errorMsgFmt, Object... args) {
+        if (Objects.isNull(object)) {
+            if (args == null || args.length < 1) {
+                throw new ApiAlertException(errorMsgFmt);
+            }
+            throw new ApiAlertException(String.format(errorMsgFmt, args));
+        }
     }
-  }
+
+    public static void throwIfNotNull(Object object, String errorMsgFmt, Object... args) {
+        if (!Objects.isNull(object)) {
+            if (args == null || args.length < 1) {
+                throw new ApiAlertException(errorMsgFmt);
+            }
+            throw new ApiAlertException(String.format(errorMsgFmt, args));
+        }
+    }
+
+    public static void throwIfFalse(boolean expression, String errorMessage) {
+        if (!expression) {
+            throw new ApiAlertException(errorMessage);
+        }
+    }
+
+    public static void throwIfTrue(boolean expression, String errorMsgFmt, Object... args) {
+        if (expression) {
+            if (args == null || args.length < 1) {
+                throw new ApiAlertException(errorMsgFmt);
+            }
+            throw new ApiAlertException(String.format(errorMsgFmt, args));
+        }
+    }
+
+    /**
+     * Validates a given condition and throws an ApiAlertException if the condition is false.
+     * This method is used to enforce business rules and ensure the validity of input parameters or states.
+     *
+     * @param condition the boolean condition to be validated. If false, an exception is thrown.
+     * @param message   the error message template, which supports placeholders for arguments.
+     * @param args      optional arguments to format the error message. These are inserted into the
+     *                  placeholders in the message using {@link String#format(String, Object...)}.
+     * @throws ApiAlertException if the condition evaluates to false. The formatted error message
+     *                           will be used as the exception message.
+     */
+    public static void validateCondition(boolean condition, String message, Object... args) {
+        ApiAlertException.throwIfFalse(condition, String.format(message, args));
+    }
 }

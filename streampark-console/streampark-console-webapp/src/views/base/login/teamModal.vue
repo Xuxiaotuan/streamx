@@ -48,8 +48,8 @@
         component: 'Select',
         componentProps: {
           options: userStore.getTeamList,
-          // getPopupContainer: (triggerNode) => triggerNode.parentNode,
           placeholder: t('sys.login.selectTeam'),
+          popupClassName: 'team-select-popup',
         },
         required: true,
       },

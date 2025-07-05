@@ -17,12 +17,12 @@
 import { Alert, Form, Input, Tag } from 'ant-design-vue';
 import { h, onMounted, reactive, ref, unref, VNode } from 'vue';
 import { handleAppBuildStatueText } from '../utils';
-import { fetchCheckName, fetchCopy, fetchForcedStop, fetchMapping } from '/@/api/flink/app';
+import { fetchCheckName, fetchCopy, fetchAbort, fetchMapping } from '/@/api/flink/app';
 import { fetchBuild, fetchBuildDetail } from '/@/api/flink/flinkBuild';
-import { fetchSavePonitHistory } from '/@/api/flink/savepoint';
+import { fetchSavePointHistory } from '/@/api/flink/savepoint';
 import { fetchAppOwners } from '/@/api/system/user';
 import { SvgIcon } from '/@/components/Icon';
-import { AppStateEnum, ExecModeEnum, OptionStateEnum } from '/@/enums/flinkEnum';
+import { AppStateEnum, DeployMode, OptionStateEnum } from '/@/enums/flinkEnum';
 import { useI18n } from '/@/hooks/web/useI18n';
 import { useMessage } from '/@/hooks/web/useMessage';
 
@@ -122,7 +122,7 @@ export const useFlinkApplication = (openStartModal: Fn) => {
       Swal.fire('Failed', 'please set flink version first.', 'error');
     } else {
       if (!optionApps.starting.get(app.id) || app['optionState'] === OptionStateEnum.NONE) {
-        const resp = await fetchSavePonitHistory({
+        const resp = await fetchSavePointHistory({
           appId: app.id,
           pageNum: 1,
           pageSize: 9999,
@@ -130,7 +130,7 @@ export const useFlinkApplication = (openStartModal: Fn) => {
         historySavePoint.value = resp.records.filter((x: Recordable) => x.path);
         const latest = resp.records.find((x: Recordable) => x.latest) || null;
         openStartModal(true, {
-          executionMode: app.executionMode,
+          deployMode: app.deployMode,
           application: app,
           historySavePoint: historySavePoint.value,
           selected: latest,
@@ -168,7 +168,7 @@ export const useFlinkApplication = (openStartModal: Fn) => {
     }
     return false;
   }
-  function handleForcedStop(app: Recordable) {
+  function handleAbort(app: Recordable) {
     let option = 'starting';
     const optionState = app['optionState'];
     const stateMap = {
@@ -189,21 +189,21 @@ export const useFlinkApplication = (openStartModal: Fn) => {
     }
     Swal.fire({
       title: 'Are you sure?',
-      text: `current job is ${option}, are you sure forced stop?`,
+      text: `current job is ${option}, are you sure abort the job?`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Yes, forced stop!',
+      confirmButtonText: 'Yes, abort job!',
       denyButtonText: `No, cancel`,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
     }).then(async (result) => {
       if (result.isConfirmed) {
-        Swal.fire('forced stopping', '', 'success');
-        const res = await fetchForcedStop({
+        Swal.fire('abort job', '', 'success');
+        const res = await fetchAbort({
           id: app.id,
         });
         if (res) {
-          createMessage.success('forced stopping');
+          createMessage.success('abort job starting');
         }
         return Promise.resolve();
       }
@@ -226,18 +226,16 @@ export const useFlinkApplication = (openStartModal: Fn) => {
       ],
       content: () => {
         return (
-          <Form class="!pt-50px">
+          <Form class="!pt-50px" layout="vertical" baseColProps={{ span: 22, offset: 1 }}>
             <Form.Item
-              label="Application Name"
-              labelCol={{ lg: { span: 7 }, sm: { span: 7 } }}
-              wrapperCol={{ lg: { span: 16 }, sm: { span: 4 } }}
+              label="Job Name"
               validateStatus={unref(validateStatus)}
               help={help}
               rules={[{ required: true }]}
             >
               <Input
                 type="text"
-                placeholder="New Application Name"
+                placeholder="New Job Name"
                 onInput={(e) => {
                   copyAppName = e.target.value;
                 }}
@@ -252,7 +250,7 @@ export const useFlinkApplication = (openStartModal: Fn) => {
         //1) check empty
         if (copyAppName == null) {
           validateStatus.value = 'error';
-          help = 'Sorry, Application Name cannot be empty';
+          help = 'Sorry, Job Name cannot be empty';
           return Promise.reject('copy application error');
         }
         //2) check name
@@ -319,24 +317,28 @@ export const useFlinkApplication = (openStartModal: Fn) => {
             class="!pt-40px"
             ref={mappingRef}
             name="mappingForm"
-            labelCol={{ lg: { span: 7 }, sm: { span: 7 } }}
-            wrapperCol={{ lg: { span: 16 }, sm: { span: 4 } }}
+            layout="vertical"
+            baseColProps={{ span: 22, offset: 1 }}
             v-model:model={formValue}
           >
-            <Form.Item label="Application Name">
+            <Form.Item label="Job Name">
               <Alert message={app.jobName} type="info" />
             </Form.Item>
             {[
-              ExecModeEnum.YARN_PER_JOB,
-              ExecModeEnum.YARN_SESSION,
-              ExecModeEnum.YARN_APPLICATION,
-            ].includes(app.executionMode) && (
+              DeployMode.YARN_PER_JOB,
+              DeployMode.YARN_SESSION,
+              DeployMode.YARN_APPLICATION,
+            ].includes(app.deployMode) && (
               <Form.Item
                 label="YARN Application Id"
-                name="appId"
+                name="clusterId"
                 rules={[{ required: true, message: 'YARN ApplicationId is required' }]}
               >
-                <Input type="text" placeholder="ApplicationId" v-model:value={formValue.appId} />
+                <Input
+                  type="text"
+                  placeholder="ApplicationId"
+                  v-model:value={formValue.clusterId}
+                />
               </Form.Item>
             )}
             <Form.Item
@@ -356,7 +358,7 @@ export const useFlinkApplication = (openStartModal: Fn) => {
           await mappingRef.value.validate();
           await fetchMapping({
             id: app.id,
-            appId: formValue.appId,
+            clusterId: formValue.clusterId,
             jobId: formValue.jobId,
           });
           Swal.fire({
@@ -383,7 +385,7 @@ export const useFlinkApplication = (openStartModal: Fn) => {
     handleCheckReleaseApp,
     handleAppCheckStart,
     handleCanStop,
-    handleForcedStop,
+    handleAbort,
     handleCopy,
     handleMapping,
     users,

@@ -22,10 +22,10 @@ import org.apache.streampark.console.base.exception.AlertException;
 import org.apache.streampark.console.base.mybatis.pager.MybatisPager;
 import org.apache.streampark.console.core.bean.AlertConfigParams;
 import org.apache.streampark.console.core.entity.AlertConfig;
-import org.apache.streampark.console.core.entity.Application;
+import org.apache.streampark.console.core.entity.FlinkApplication;
 import org.apache.streampark.console.core.mapper.AlertConfigMapper;
 import org.apache.streampark.console.core.service.alert.AlertConfigService;
-import org.apache.streampark.console.core.service.application.ApplicationInfoService;
+import org.apache.streampark.console.core.service.application.FlinkApplicationInfoService;
 
 import org.apache.commons.collections.CollectionUtils;
 
@@ -45,45 +45,42 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional(propagation = Propagation.SUPPORTS, readOnly = true, rollbackFor = Exception.class)
 public class AlertConfigServiceImpl extends ServiceImpl<AlertConfigMapper, AlertConfig>
-    implements AlertConfigService {
+    implements
+        AlertConfigService {
 
-  @Autowired private ApplicationInfoService applicationInfoService;
+    @Autowired
+    private FlinkApplicationInfoService applicationInfoService;
 
-  @Override
-  public IPage<AlertConfigParams> page(Long userId, RestRequest request) {
-    // build query conditions
-    LambdaQueryWrapper<AlertConfig> wrapper = new LambdaQueryWrapper<>();
-    wrapper.eq(userId != null, AlertConfig::getUserId, userId);
+    @Override
+    public IPage<AlertConfigParams> page(Long userId, RestRequest request) {
+        // build query conditions
+        Page<AlertConfig> page = MybatisPager.getPage(request);
+        IPage<AlertConfig> resultPage =
+            this.lambdaQuery().eq(userId != null, AlertConfig::getUserId, userId).page(page);
+        Page<AlertConfigParams> result = new Page<>();
+        if (CollectionUtils.isNotEmpty(resultPage.getRecords())) {
+            result.setRecords(
+                resultPage.getRecords().stream().map(AlertConfigParams::of).collect(Collectors.toList()));
+        }
 
-    Page<AlertConfig> page = MybatisPager.getPage(request);
-    IPage<AlertConfig> resultPage = getBaseMapper().selectPage(page, wrapper);
-
-    Page<AlertConfigParams> result = new Page<>();
-    if (CollectionUtils.isNotEmpty(resultPage.getRecords())) {
-      result.setRecords(
-          resultPage.getRecords().stream().map(AlertConfigParams::of).collect(Collectors.toList()));
+        return result;
     }
 
-    return result;
-  }
-
-  @Override
-  public boolean exist(AlertConfig alertConfig) {
-    AlertConfig confByName = this.baseMapper.selectAlertConfByName(alertConfig);
-    return confByName != null;
-  }
-
-  @Override
-  public boolean removeById(Long id) throws AlertException {
-    long count =
-        applicationInfoService.count(
-            new LambdaQueryWrapper<Application>().eq(id != null, Application::getAlertId, id));
-    if (count > 0) {
-      throw new AlertException(
-          String.format(
-              "AlertId:%d, this is bound by application. Please clear the configuration first",
-              id));
+    @Override
+    public boolean exist(AlertConfig alertConfig) {
+        return this.lambdaQuery().eq(AlertConfig::getAlertName, alertConfig.getAlertName()).exists();
     }
-    return super.removeById(id);
-  }
+
+    @Override
+    public boolean removeById(Long id) throws AlertException {
+        long count = applicationInfoService.count(
+            new LambdaQueryWrapper<FlinkApplication>().eq(id != null, FlinkApplication::getAlertId, id));
+        if (count > 0) {
+            throw new AlertException(
+                String.format(
+                    "AlertId:%d, this is bound by application. Please clear the configuration first",
+                    id));
+        }
+        return super.removeById(id);
+    }
 }

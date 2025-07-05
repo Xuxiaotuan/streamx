@@ -21,7 +21,6 @@ import org.apache.streampark.console.system.entity.RoleMenu;
 import org.apache.streampark.console.system.mapper.RoleMenuMapper;
 import org.apache.streampark.console.system.service.RoleMenuService;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -33,29 +32,23 @@ import java.util.List;
 @Service
 @Transactional(propagation = Propagation.SUPPORTS, readOnly = true, rollbackFor = Exception.class)
 public class RoleMenuServiceImpl extends ServiceImpl<RoleMenuMapper, RoleMenu>
-    implements RoleMenuService {
+    implements
+        RoleMenuService {
 
-  @Override
-  @Transactional
-  public void removeByRoleId(Long roleId) {
-    LambdaQueryWrapper<RoleMenu> queryWrapper =
-        new LambdaQueryWrapper<RoleMenu>().eq(RoleMenu::getRoleId, roleId);
-    baseMapper.delete(queryWrapper);
-  }
+    @Override
+    @Transactional
+    public void removeByRoleId(Long roleId) {
+        this.lambdaUpdate().eq(RoleMenu::getRoleId, roleId).remove();
+    }
 
-  @Override
-  @Transactional
-  public void removeByMenuIds(String[] menuIds) {
-    List<String> menuIdList = Arrays.asList(menuIds);
-    LambdaQueryWrapper<RoleMenu> queryWrapper =
-        new LambdaQueryWrapper<RoleMenu>().in(RoleMenu::getMenuId, menuIdList);
-    baseMapper.delete(queryWrapper);
-  }
+    @Override
+    @Transactional
+    public void removeByMenuIds(String[] menuIds) {
+        this.lambdaUpdate().in(RoleMenu::getRoleId, Arrays.asList(menuIds)).remove();
+    }
 
-  @Override
-  public List<RoleMenu> listByRoleId(String roleId) {
-    LambdaQueryWrapper<RoleMenu> queryWrapper =
-        new LambdaQueryWrapper<RoleMenu>().eq(RoleMenu::getRoleId, roleId);
-    return baseMapper.selectList(queryWrapper);
-  }
+    @Override
+    public List<RoleMenu> listByRoleId(String roleId) {
+        return this.lambdaQuery().eq(RoleMenu::getRoleId, roleId).list();
+    }
 }

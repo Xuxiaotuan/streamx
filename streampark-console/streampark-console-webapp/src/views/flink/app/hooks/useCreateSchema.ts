@@ -19,7 +19,7 @@ import { computed, h, Ref, ref, unref } from 'vue';
 import {
   AppTypeEnum,
   ConfigTypeEnum,
-  ExecModeEnum,
+  DeployMode,
   JobTypeEnum,
   ResourceFromEnum,
 } from '/@/enums/flinkEnum';
@@ -39,8 +39,8 @@ const getJobTypeOptions = () => {
   return [
     {
       label: h('div', {}, [
-        h(SvgIcon, { name: 'code', color: '#108ee9' }, ''),
-        h('span', { class: 'pl-10px' }, 'Custom Code'),
+        h(SvgIcon, { name: 'fjar', color: '#108ee9' }, ''),
+        h('span', { class: 'pl-10px' }, 'Flink JAR'),
       ]),
       value: String(JobTypeEnum.JAR),
     },
@@ -72,7 +72,7 @@ export const useCreateSchema = (dependencyRef: Ref) => {
     teamResource,
     getFlinkSqlSchema,
     getFlinkClusterSchemas,
-    getExecutionModeSchema,
+    getDeployModeSchema,
     getFlinkFormOtherSchemas,
     suggestions,
   } = useCreateAndEditSchema(dependencyRef);
@@ -101,11 +101,11 @@ export const useCreateSchema = (dependencyRef: Ref) => {
     return [
       {
         field: 'jobType',
-        label: t('flink.app.developmentMode'),
+        label: t('flink.app.jobType'),
         component: 'Select',
         componentProps: ({ formModel }) => {
           return {
-            placeholder: t('flink.app.addAppTips.developmentModePlaceholder'),
+            placeholder: t('flink.app.addAppTips.jobTypePlaceholder'),
             options: getJobTypeOptions(),
             onChange: (value) => {
               if (value != JobTypeEnum.SQL) {
@@ -115,11 +115,9 @@ export const useCreateSchema = (dependencyRef: Ref) => {
           };
         },
         defaultValue: String(JobTypeEnum.SQL),
-        rules: [
-          { required: true, message: t('flink.app.addAppTips.developmentModeIsRequiredMessage') },
-        ],
+        rules: [{ required: true, message: t('flink.app.addAppTips.jobTypeIsRequiredMessage') }],
       },
-      ...getExecutionModeSchema.value,
+      ...getDeployModeSchema.value,
       ...getFlinkClusterSchemas.value,
       ...getFlinkSqlSchema.value,
       {
@@ -301,7 +299,7 @@ export const useCreateSchema = (dependencyRef: Ref) => {
         component: 'Switch',
         slot: 'useSysHadoopConf',
         defaultValue: false,
-        ifShow: ({ values }) => values.executionMode == ExecModeEnum.KUBERNETES_APPLICATION,
+        ifShow: ({ values }) => values.deployMode == DeployMode.KUBERNETES_APPLICATION,
       },
       ...getFlinkFormOtherSchemas.value,
     ];

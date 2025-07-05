@@ -14,9 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.streampark.common.util
 
-import org.apache.streampark.common.Constant
+import org.apache.streampark.common.constants.Constants
 
 import java.io.{File, IOException}
 import java.net.{URL, URLClassLoader}
@@ -26,7 +27,8 @@ import scala.collection.mutable.ArrayBuffer
 
 object ClassLoaderUtils extends Logger {
 
-  private[this] val originalClassLoader: ClassLoader = Thread.currentThread().getContextClassLoader
+  private[this] val originalClassLoader: ClassLoader =
+    Thread.currentThread().getContextClassLoader
 
   /**
    * Execute with the specified classloader for scala API
@@ -110,7 +112,7 @@ object ClassLoaderUtils extends Logger {
 
   private[this] def loadPath(
       filepath: String,
-      ext: List[String] = List(Constant.JAR_SUFFIX, Constant.ZIP_SUFFIX)): Unit = {
+      ext: List[String] = List(Constants.JAR_SUFFIX, Constants.ZIP_SUFFIX)): Unit = {
     val file = new File(filepath)
     loopFiles(file, ext)
   }
@@ -147,7 +149,8 @@ object ClassLoaderUtils extends Logger {
         val field = classLoader.getClass.getDeclaredField("ucp")
         field.setAccessible(true)
         val ucp = field.get(classLoader)
-        val addURL = ucp.getClass.getDeclaredMethod("addURL", Array(classOf[URL]): _*)
+        val addURL =
+          ucp.getClass.getDeclaredMethod("addURL", Array(classOf[URL]): _*)
         addURL.setAccessible(true)
         addURL.invoke(ucp, file.toURI.toURL)
     }

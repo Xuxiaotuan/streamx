@@ -30,12 +30,10 @@
     <packaging>pom</packaging>
     <name>StreamPark Project Parent POM</name>
 
-    <url>https://streampark.apache.org/</url>
+    <description>StreamPark, Make stream processing easier! easy-to-use streaming application development framework and operation
+        platform</description>
 
-    <description>
-        StreamPark, Make stream processing easier! easy-to-use streaming application development framework and operation
-        platform
-    </description>
+    <url>https://streampark.apache.org/</url>
 
     <organization>
         <name>Apache Software Foundation</name>
@@ -49,39 +47,39 @@
         </license>
     </licenses>
 
-    <scm>
-        <connection>scm:git:git://github.com/apache/incubator-streampark.git</connection>
-        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/incubator-streampark.git</developerConnection>
-        <url>scm:git:git@github.com:apache/incubator-streampark.git</url>
-        <tag>HEAD</tag>
-    </scm>
-
-    <issueManagement>
-        <system>GitHub</system>
-        <url>https://github.com/apache/incubator-streampark/issues</url>
-    </issueManagement>
-
     <mailingLists>
         <mailingList>
             <name>StreamPark Developer List</name>
-            <post>dev@streampark.apache.org</post>
             <subscribe>dev-subscribe@streampark.apache.org</subscribe>
             <unsubscribe>dev-unsubscribe@streampark.apache.org</unsubscribe>
+            <post>dev@streampark.apache.org</post>
         </mailingList>
         <mailingList>
             <name>StreamPark Commits List</name>
-            <post>commits@streampark.apache.org</post>
             <subscribe>commits-subscribe@streampark.apache.org</subscribe>
             <unsubscribe>commits-unsubscribe@streampark.apache.org</unsubscribe>
+            <post>commits@streampark.apache.org</post>
         </mailingList>
     </mailingLists>
 
     <modules>
         <module>streampark-common</module>
         <module>streampark-flink</module>
+        <module>streampark-spark</module>
         <module>streampark-console</module>
-        <module>streampark-tests</module>
     </modules>
+
+    <scm>
+        <connection>scm:git:git://github.com/apache/streampark.git</connection>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/streampark.git</developerConnection>
+        <tag>HEAD</tag>
+        <url>scm:git:git@github.com:apache/streampark.git</url>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/apache/streampark/issues</url>
+    </issueManagement>
 
     <properties>
         <project.build.jdk>1.8</project.build.jdk>
@@ -93,17 +91,19 @@
         <scala.xml.version>1.3.0</scala.xml.version>
         <scalatest.version>3.2.9</scalatest.version>
         <scala.binary.flink.version>_${scala.binary.version}</scala.binary.flink.version>
-
-        <flink.version>1.14.4</flink.version>
+        <flink.connector.version>3.2.0-1.18</flink.connector.version>
+        <flink.elasticserch.connector.version>3.0.1-1.17</flink.elasticserch.connector.version>
+        <flink.version>1.20.1</flink.version>
         <flink.shaded.version>1.8.1</flink.shaded.version>
         <streampark.shaded.version>1.0.0</streampark.shaded.version>
         <streampark.flink.shims.version>1.14</streampark.flink.shims.version>
-        <spark.version>3.2.0</spark.version>
+        <spark.version>3.1.2</spark.version>
         <scalikejdbc.version>4.0.0</scalikejdbc.version>
         <hive.version>2.3.4</hive.version>
         <hadoop.version>3.3.4</hadoop.version>
         <hbase.version>2.1.10</hbase.version>
         <redis.version>3.3.0</redis.version>
+        <zoopkeeper.version>3.6.3</zoopkeeper.version>
         <es.version>6.2.3</es.version>
         <influxdb.version>2.17</influxdb.version>
         <protobuf.version>2.5.0</protobuf.version>
@@ -117,15 +117,12 @@
         <hikariCP.version>3.4.5</hikariCP.version>
         <snakeyaml.version>2.0</snakeyaml.version>
         <typesafe-conf.version>1.4.2</typesafe-conf.version>
-        <json4s-jackson.version>4.0.6</json4s-jackson.version>
+        <json4s-jackson.version>3.7.0-M11</json4s-jackson.version>
         <commons-cli.version>1.5.0</commons-cli.version>
         <commons-net.version>3.9.0</commons-net.version>
-        <commons-lang3.version>3.8.1</commons-lang3.version>
+        <commons-lang3.version>3.12.0</commons-lang3.version>
         <enumeratum.version>1.6.1</enumeratum.version>
         <assertj.version>3.23.1</assertj.version>
-        <zio.version>2.0.15</zio.version>
-        <zio-logging.version>2.1.13</zio-logging.version>
-        <pprint.version>0.8.1</pprint.version>
 
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
         <maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
@@ -136,30 +133,31 @@
         <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
         <maven-spotless-plugin.version>2.27.2</maven-spotless-plugin.version>
         <maven-apache-rat-plugin.version>0.13</maven-apache-rat-plugin.version>
-        <spotless.scalafmt.version>3.4.3</spotless.scalafmt.version>
+        <maven-silencer-plugin.version>1.7.13</maven-silencer-plugin.version>
+        <spotless.scalafmt.version>3.7.5</spotless.scalafmt.version>
         <maven-checkstyle-plugin.version>3.2.0</maven-checkstyle-plugin.version>
-        <owasp-dependency-check-maven.version>8.2.1</owasp-dependency-check-maven.version>
+        <maven-scalastyle-plugin.version>1.0.0</maven-scalastyle-plugin.version>
         <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
         <streampark.shaded.package>org.apache.streampark.shaded</streampark.shaded.package>
-        <flink.table.uber.artifact.id>flink-table-uber_${scala.binary.version}</flink.table.uber.artifact.id>
         <httpclient5.version>5.1</httpclient5.version>
         <lombok.version>1.18.24</lombok.version>
         <jupiter.version>5.9.1</jupiter.version>
         <mockito.version>3.4.6</mockito.version>
         <mockito-scala.version>1.17.14</mockito-scala.version>
         <assertj.version>3.23.1</assertj.version>
+        <testcontainer.version>1.19.8</testcontainer.version>
 
-        <PermGen>64m</PermGen>
-        <MaxPermGen>512m</MaxPermGen>
-        <CodeCacheSize>512m</CodeCacheSize>
-        <MaxMetaspace>512m</MaxMetaspace>
-        <skipDependencyCheck>true</skipDependencyCheck>
+        <maven.scaladoc.skip>false</maven.scaladoc.skip>
+        <maven.scalastyle.skip>false</maven.scalastyle.skip>
+
+        <spotless.skip>false</spotless.skip>
+        <rat.skip>false</rat.skip>
+        <owasp.skip>true</owasp.skip>
     </properties>
 
     <dependencyManagement>
 
         <dependencies>
-
             <dependency>
                 <groupId>org.apache.flink</groupId>
                 <artifactId>force-shading</artifactId>
@@ -241,6 +239,13 @@
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
                 <version>${mysql.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper</artifactId>
+                <version>${zoopkeeper.version}</version>
             </dependency>
 
             <dependency>
@@ -320,6 +325,12 @@
                 <groupId>commons-net</groupId>
                 <artifactId>commons-net</artifactId>
                 <version>${commons-net.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${commons-collections4.version}</version>
             </dependency>
 
             <dependency>
@@ -415,6 +426,28 @@
                 <version>${lombok.version}</version>
             </dependency>
 
+            <!-- test dependencies on TestContainers -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers</artifactId>
+                <version>${testcontainer.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>mysql</artifactId>
+                <version>${testcontainer.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${testcontainer.version}</version>
+                <scope>test</scope>
+            </dependency>
+
             <!-- test -->
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
@@ -443,33 +476,6 @@
                 <version>${assertj.version}</version>
                 <scope>test</scope>
             </dependency>
-
-            <!-- ZIO -->
-            <dependency>
-                <groupId>dev.zio</groupId>
-                <artifactId>zio-logging_${scala.binary.version}</artifactId>
-                <version>${zio-logging.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>dev.zio</groupId>
-                <artifactId>zio-streams_${scala.binary.version}</artifactId>
-                <version>${zio.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>dev.zio</groupId>
-                <artifactId>zio-concurrent_${scala.binary.version}</artifactId>
-                <version>${zio.version}</version>
-            </dependency>
-
-            <!-- pprint -->
-            <dependency>
-                <groupId>com.lihaoyi</groupId>
-                <artifactId>pprint_${scala.binary.version}</artifactId>
-                <version>${pprint.version}</version>
-            </dependency>
-
         </dependencies>
 
     </dependencyManagement>
@@ -538,8 +544,8 @@
                     <artifactId>maven-checkstyle-plugin</artifactId>
                     <version>${maven-checkstyle-plugin.version}</version>
                     <configuration>
-                        <suppressionsLocation>/tools/checkstyle/suppressions.xml</suppressionsLocation>
-                        <configLocation>/tools/checkstyle/checkstyle.xml</configLocation>
+                        <suppressionsLocation>${maven.multiModuleProjectDirectory}/tools/checkstyle/suppressions.xml</suppressionsLocation>
+                        <configLocation>${maven.multiModuleProjectDirectory}/tools/checkstyle/checkstyle.xml</configLocation>
                         <inputEncoding>UTF-8</inputEncoding>
                         <outputEncoding>UTF-8</outputEncoding>
                         <consoleOutput>true</consoleOutput>
@@ -549,23 +555,19 @@
                             <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
                             <sourceDirectory>${project.build.testSourceDirectory}</sourceDirectory>
                         </sourceDirectories>
-                        <resourceIncludes>
-                            **/*.properties,
+                        <resourceIncludes>**/*.properties,
                             **/*.sh,
                             **/*.bat,
                             **/*.yml,
                             **/*.yaml,
                             **/*.xml,
-                            **/*.dict
-                        </resourceIncludes>
-                        <resourceExcludes>
-                            **/.asf.yaml,
+                            **/*.dict</resourceIncludes>
+                        <resourceExcludes>**/.asf.yaml,
                             **/.github/**,
                             **/crd/**.yml,
-                            **/crd/**.yaml
-                        </resourceExcludes>
-                        <excludes>
-                        </excludes>
+                            **/crd/**.yaml</resourceExcludes>
+                        <excludes>**/*.java,
+                            **/*.scala</excludes>
                     </configuration>
                     <dependencies>
                         <dependency>
@@ -577,7 +579,32 @@
                     <executions>
                         <execution>
                             <id>validate</id>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
                             <phase>process-sources</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.scalastyle</groupId>
+                    <artifactId>scalastyle-maven-plugin</artifactId>
+                    <version>${maven-scalastyle-plugin.version}</version>
+                    <configuration>
+                        <verbose>false</verbose>
+                        <failOnViolation>true</failOnViolation>
+                        <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                        <failOnWarning>false</failOnWarning>
+                        <sourceDirectory>${project.basedir}/src/main/scala</sourceDirectory>
+                        <testSourceDirectory>${project.basedir}/src/test/scala</testSourceDirectory>
+                        <configLocation>${maven.multiModuleProjectDirectory}/tools/checkstyle/scalastyle-config.xml</configLocation>
+                        <outputFile>${project.build.directory}/scalastyle-output.xml</outputFile>
+                        <outputEncoding>UTF-8</outputEncoding>
+                        <skip>${maven.scalastyle.skip}</skip>
+                    </configuration>
+                    <executions>
+                        <execution>
                             <goals>
                                 <goal>check</goal>
                             </goals>
@@ -590,19 +617,22 @@
                     <artifactId>spotless-maven-plugin</artifactId>
                     <version>${maven-spotless-plugin.version}</version>
                     <configuration>
+                        <skip>${spotless.skip}</skip>
                         <java>
                             <includes>
                                 <include>src/main/java/**/*.java</include>
                                 <include>src/test/java/**/*.java</include>
+                                <include>streampark-e2e/streampark-e2e-case/src/test/java/**/*.java</include>
+                                <include>streampark-e2e/streampark-e2e-core/src/main/java/**/*.java</include>
                             </includes>
-                            <googleJavaFormat>
-                                <version>1.7</version>
-                                <style>GOOGLE</style>
-                            </googleJavaFormat>
+                            <eclipse>
+                                <file>${maven.multiModuleProjectDirectory}/tools/checkstyle/spotless_streampark_formatter.xml</file>
+                            </eclipse>
+                            <licenseHeader>
+                                <file>${maven.multiModuleProjectDirectory}/tools/checkstyle/copyright.txt</file>
+                            </licenseHeader>
                             <importOrder>
-                                <order>
-                                    org.apache.streampark,org.apache.streampark.shaded,org.apache,,javax,java,scala,\#
-                                </order>
+                                <order>org.apache.streampark,org.apache.streampark.shaded,org.apache,,javax,java,scala,\#</order>
                             </importOrder>
                             <replaceRegex>
                                 <name>Remove wildcard imports</name>
@@ -619,23 +649,44 @@
                                 <searchRegex>import\s+org\.junit\.[^jupiter][^\*\s]*(|\*);(\r\n|\r|\n)</searchRegex>
                                 <replacement>$1</replacement>
                             </replaceRegex>
-                            <removeUnusedImports/>
+                            <removeUnusedImports></removeUnusedImports>
                         </java>
+
                         <scala>
+                            <includes>
+                                <include>src/main/scala/**/*.scala</include>
+                                <include>src/main/scala-*/**/*.scala</include>
+                                <include>src/test/scala/**/*.scala</include>
+                                <include>src/test/scala-*/**/*.scala</include>
+                            </includes>
                             <scalafmt>
                                 <version>${spotless.scalafmt.version}</version>
-                                <!--suppress UnresolvedMavenProperty -->
-                                <file>${maven.multiModuleProjectDirectory}/.scalafmt.conf</file>
+                                <file>${maven.multiModuleProjectDirectory}/tools/checkstyle/.scalafmt.conf</file>
                             </scalafmt>
+                            <licenseHeader>
+                                <file>${maven.multiModuleProjectDirectory}/tools/checkstyle/copyright.txt</file>
+                            </licenseHeader>
                         </scala>
+                        <pom>
+                            <includes>
+                                <include>pom.xml</include>
+                            </includes>
+                            <sortPom>
+                                <encoding>${project.build.sourceEncoding}</encoding>
+                                <expandEmptyElements>true</expandEmptyElements>
+                                <indentSchemaLocation>true</indentSchemaLocation>
+                                <nrOfIndentSpace>4</nrOfIndentSpace>
+                            </sortPom>
+                        </pom>
+
                     </configuration>
                     <executions>
                         <execution>
                             <id>spotless-check</id>
-                            <phase>validate</phase>
                             <goals>
                                 <goal>check</goal>
                             </goals>
+                            <phase>validate</phase>
                         </execution>
                     </executions>
                 </plugin>
@@ -667,6 +718,34 @@
                         <addScalacArgs>-target:jvm-${project.build.jdk}</addScalacArgs>
                         <target>${project.build.jdk}</target>
                         <source>${project.build.jdk}</source>
+                        <args>
+                            <arg>-unchecked</arg>
+                            <arg>-deprecation</arg>
+                            <arg>-feature</arg>
+                            <arg>-explaintypes</arg>
+                            <arg>-P:silencer:globalFilters=.*deprecated.*</arg>
+                            <arg>-P:silencer:globalFilters=.*Could not find any member to link for.*</arg>
+                            <arg>-P:silencer:globalFilters=.*undefined in comment for class.*</arg>
+                            <arg>-Xfatal-warnings</arg>
+                            <arg>-Ywarn-unused:imports</arg>
+                        </args>
+                        <jvmArgs>
+                            <jvmArg>-Xms1024m</jvmArg>
+                            <jvmArg>-Xmx1024m</jvmArg>
+                            <jvmArg>-XX:ReservedCodeCacheSize=512M</jvmArg>
+                        </jvmArgs>
+                        <javacArgs>
+                            <javacArg>-Xlint:all,-serial,-path,-try,-processing</javacArg>
+                        </javacArgs>
+                        <compilerPlugins>
+                            <compilerPlugin>
+                                <groupId>com.github.ghik</groupId>
+                                <artifactId>silencer-plugin_${scala.version}</artifactId>
+                                <version>${maven-silencer-plugin.version}</version>
+                            </compilerPlugin>
+                        </compilerPlugins>
+                        <!-- only skipping `scala:doc-jar` -->
+                        <skip>${maven.scaladoc.skip}</skip>
                     </configuration>
                     <executions>
                         <execution>
@@ -695,8 +774,7 @@
                     <configuration>
                         <shadedArtifactId>true</shadedArtifactId>
                         <createDependencyReducedPom>true</createDependencyReducedPom>
-                        <dependencyReducedPomLocation>${project.basedir}/target/dependency-reduced-pom.xml
-                        </dependencyReducedPomLocation>
+                        <dependencyReducedPomLocation>${project.basedir}/target/dependency-reduced-pom.xml</dependencyReducedPomLocation>
                         <artifactSet>
                             <includes>
                                 <!--
@@ -776,32 +854,13 @@
                     <version>${maven-deploy-plugin.version}</version>
                 </plugin>
 
-                <plugin>
-                    <!-- run via "mvn -DskipDependencyCheck=false org.owasp:dependency-check-maven:aggregate" -->
-                    <groupId>org.owasp</groupId>
-                    <artifactId>dependency-check-maven</artifactId>
-                    <version>${owasp-dependency-check-maven.version}</version>
-                    <configuration>
-                        <skip>${skipDependencyCheck}</skip>
-                        <format>ALL</format>
-                        <skipProvidedScope>true</skipProvidedScope>
-                        <skipSystemScope>true</skipSystemScope>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>aggregate</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-
                 <!--mvn apache-rat:check-->
                 <plugin>
                     <groupId>org.apache.rat</groupId>
                     <artifactId>apache-rat-plugin</artifactId>
                     <version>${maven-apache-rat-plugin.version}</version>
                     <configuration>
+                        <skip>${rat.skip}</skip>
                         <excludes>
                             <exclude>.asf.yaml</exclude>
                             <exclude>.git-blame-ignore-revs</exclude>
@@ -830,7 +889,6 @@
                             <exclude>compiler/**</exclude>
                             <exclude>dist-material/**</exclude>
                             <exclude>docker/**</exclude>
-                            <exclude>helm/**</exclude>
                             <exclude>mvnw</exclude>
                             <exclude>mvnw.cmd</exclude>
                             <exclude>README.md</exclude>
@@ -874,6 +932,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.scalastyle</groupId>
+                <artifactId>scalastyle-maven-plugin</artifactId>
             </plugin>
 
             <plugin>
@@ -931,6 +994,20 @@
             <modules>
                 <module>streampark-spark</module>
             </modules>
+        </profile>
+
+        <profile>
+            <id>fast</id>
+            <properties>
+                <enforcer.skip>true</enforcer.skip>
+                <maven.javadoc.skip>true</maven.javadoc.skip>
+                <maven.scaladoc.skip>true</maven.scaladoc.skip>
+                <maven.scalastyle.skip>true</maven.scalastyle.skip>
+                <skipTests>true</skipTests>
+                <rat.skip>true</rat.skip>
+                <owasp.skip>true</owasp.skip>
+                <spotless.skip>true</spotless.skip>
+            </properties>
         </profile>
     </profiles>
 

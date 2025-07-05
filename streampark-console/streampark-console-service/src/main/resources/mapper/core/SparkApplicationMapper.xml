@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one or more
+  ~ contributor license agreements.  See the NOTICE file distributed with
+  ~ this work for additional information regarding copyright ownership.
+  ~ The ASF licenses this file to You under the Apache License, Version 2.0
+  ~ (the "License"); you may not use this file except in compliance with
+  ~ the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.apache.streampark.console.core.mapper.SparkApplicationMapper">
+
+    <select id="selectPage" resultType="org.apache.streampark.console.core.entity.SparkApplication" parameterType="org.apache.streampark.console.core.entity.SparkApplication">
+        select
+            t.*,
+            u.username,
+           case
+               when trim(u.nick_name) = ''
+                   then u.username
+               else u.nick_name
+            end as nickname,
+            v.version as sparkVersion
+        from t_spark_app t
+        inner join t_user u
+        on t.user_id = u.user_id
+        left join t_spark_env v
+        on t.version_id = v.id
+        <where>
+            t.team_id = #{app.teamId}
+            <if test="app.jobType != null and app.jobType != ''">
+                and t.job_type = #{app.jobType}
+            </if>
+            <if test="app.deployMode != null and app.deployMode != ''">
+                and t.deploy_mode = #{app.deployMode}
+            </if>
+            <if test="app.appName != null and app.appName != ''">
+                <if test="_databaseId == 'mysql'">
+                    and t.app_name like concat('%', #{app.appName},'%')
+                </if>
+                <if test="_databaseId == 'pgsql'">
+                    and t.app_name like '%' || #{app.appName} || '%'
+                </if>
+            </if>
+            <if test="app.clusterId != null and app.clusterId != ''">
+                and t.cluster_id = #{app.clusterId}
+            </if>
+            <if test="app.state != null and app.state != ''">
+                and t.state = #{app.state}
+            </if>
+            <if test="app.userId != null and app.userId != ''">
+                and t.user_id = #{app.userId}
+            </if>
+            <if test="app.tags != null and app.tags != ''">
+                <if test="_databaseId == 'mysql'">
+                    and t.tags like concat('%', #{app.tags},'%')
+                </if>
+                <if test="_databaseId == 'pgsql'">
+                    and t.tags like '%' || #{app.tags} || '%'
+                </if>
+            </if>
+        </where>
+    </select>
+
+    <select id="selectApp" resultType="org.apache.streampark.console.core.entity.SparkApplication" parameterType="long">
+        select *
+        from t_spark_app
+        where id = #{id}
+    </select>
+
+    <select id="selectAppsByTeamId" resultType="org.apache.streampark.console.core.entity.SparkApplication" parameterType="java.lang.Long">
+        select
+            t.*,
+            u.username,
+            case
+                when trim(u.nick_name) = ''
+                    then u.username
+                else u.nick_name
+            end as nick_name
+        from t_spark_app t
+        inner join t_user u
+        on t.user_id = u.user_id
+        where t.team_id=#{teamId}
+    </select>
+
+    <select id="selectRecentK8sNamespaces" resultType="java.lang.String" parameterType="java.lang.Integer">
+        select k8s_namespace
+        from (
+            select k8s_namespace, max(create_time) as ct
+            from t_spark_app
+            where k8s_namespace is not null
+            group by k8s_namespace
+            order by ct desc
+        ) as ns
+        limit #{limitSize}
+    </select>
+
+    <update id="persistMetrics" parameterType="org.apache.streampark.console.core.entity.SparkApplication">
+        update t_spark_app
+        <set>
+            <if test="app.clusterId != null and app.clusterId != ''">
+                cluster_id=#{app.clusterId},
+            </if>
+            <if test="app.tracking != null">
+                tracking=#{app.tracking},
+            </if>
+            <if test="app.optionState != null">
+                option_state=#{app.optionState},
+            </if>
+            <if test="app.startTime != null">
+                start_time=#{app.startTime},
+            </if>
+            <if test="app.endTime != null">
+                end_time=#{app.endTime},
+            </if>
+            <if test="app.duration != null">
+                duration=#{app.duration},
+            </if>
+            <choose>
+                <when test="@org.apache.streampark.console.core.enums.SparkAppStateEnum@isEndState(app.state)">
+                    num_tasks=null,
+                    num_completed_tasks=null,
+                    num_stages=null,
+                    num_completed_stages=null,
+                    used_memory=null,
+                    used_v_cores=null,
+                </when>
+                <otherwise>
+                    <if test="app.numTasks != null">
+                        num_tasks=#{app.numTasks},
+                    </if>
+                    <if test="app.numCompletedTasks != null">
+                        num_completed_tasks=#{app.numCompletedTasks},
+                    </if>
+                    <if test="app.numStages != null">
+                        num_stages=#{app.numStages},
+                    </if>
+                    <if test="app.numCompletedStages != null">
+                        num_completed_stages=#{app.numCompletedStages},
+                    </if>
+                    <if test="app.usedMemory != null">
+                        used_memory=#{app.usedMemory},
+                    </if>
+                    <if test="app.usedVCores != null">
+                        used_v_cores=#{app.usedVCores},
+                    </if>
+                </otherwise>
+            </choose>
+            state=#{app.state}
+        </set>
+        where id=#{app.id}
+    </update>
+
+</mapper>

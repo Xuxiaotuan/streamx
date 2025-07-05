@@ -17,19 +17,18 @@
 
 package org.apache.streampark.flink.client.bean
 
-import org.apache.streampark.common.Constant
 import org.apache.streampark.common.conf.FlinkVersion
-import org.apache.streampark.common.enums.FlinkExecutionMode
+import org.apache.streampark.common.constants.Constants
+import org.apache.streampark.common.enums.FlinkDeployMode
+import org.apache.streampark.common.util.Implicits._
 
 import javax.annotation.Nullable
-
-import java.util.{Map => JavaMap}
 
 trait SavepointRequestTrait {
 
   val flinkVersion: FlinkVersion
 
-  val executionMode: FlinkExecutionMode
+  val deployMode: FlinkDeployMode
 
   val clusterId: String
 
@@ -41,7 +40,7 @@ trait SavepointRequestTrait {
 
   val nativeFormat: Boolean
 
-  val kubernetesNamespace: String = Constant.DEFAULT
+  val kubernetesNamespace: String = Constants.DEFAULT
 
   @Nullable val properties: JavaMap[String, Any]
 

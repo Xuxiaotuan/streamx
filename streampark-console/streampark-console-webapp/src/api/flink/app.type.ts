@@ -68,7 +68,7 @@ export interface AppListRecord {
   options: string;
   hotParams?: string;
   resolveOrder: number;
-  executionMode: number;
+  deployMode: number;
   dynamicProperties?: string;
   appType: number;
   tracking: number;
@@ -116,8 +116,8 @@ export interface AppListRecord {
   flinkVersion: string;
   confPath?: any;
   format?: any;
-  savePoint?: any;
-  savePointed: boolean;
+  savepointPath?: any;
+  restoreOrTriggerSavepoint: boolean;
   drain: boolean;
   nativeFormat: boolean;
   allowNonRestored: boolean;
@@ -149,15 +149,15 @@ interface AppControl {
 /* cancel params */
 export interface CancelParam {
   id: string;
-  savePointed: boolean;
+  restoreOrTriggerSavepoint: boolean;
   drain: boolean;
-  nativeFormat: boolean;
-  savePoint: string;
+  nativeFormat?: boolean;
+  savepointPath: string;
 }
 // create Params
 export interface CreateParams {
   jobType: number;
-  executionMode: number;
+  deployMode: number;
   versionId: string;
   flinkSql: string;
   appType: number;

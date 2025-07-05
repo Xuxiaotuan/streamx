@@ -18,7 +18,7 @@
 package org.apache.streampark.common.fs
 
 import org.apache.streampark.common.util.Logger
-import org.apache.streampark.common.util.Utils.{isAnyBank, requireNotEmpty}
+import org.apache.streampark.common.util.Utils.{isAnyBank, isNotEmpty}
 
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.{FileUtils, IOUtils}
@@ -27,7 +27,6 @@ import org.apache.commons.lang3.StringUtils
 import java.io.{File, FileInputStream}
 
 /** Local File System (aka LFS) Operator */
-//noinspection DuplicatedCode
 object LfsOperator extends FsOperator with Logger {
 
   override def exists(path: String): Boolean = {
@@ -41,7 +40,7 @@ object LfsOperator extends FsOperator with Logger {
   }
 
   override def delete(path: String): Unit = {
-    if (requireNotEmpty(path)) {
+    if (isNotEmpty(path)) {
       val file = new File(path)
       if (file.exists()) {
         FileUtils.forceDelete(file)
@@ -147,13 +146,15 @@ object LfsOperator extends FsOperator with Logger {
 
   /** list file under directory, one level of traversal only */
   def listDir(path: String): Array[File] = {
-    if (path == null || path.trim.isEmpty) Array.empty
-    else
+    if (path == null || path.trim.isEmpty) {
+      Array.empty
+    } else {
       new File(path) match {
         case f if !f.exists => Array()
         case f if f.isFile => Array(f)
         case f => f.listFiles()
       }
+    }
   }
 
 }

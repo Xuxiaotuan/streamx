@@ -32,6 +32,13 @@
       const res = await fetchDashboard();
       if (res) {
         Object.assign(dashBigScreenMap, {
+          runningJob: {
+            staticstics: { title: t('flink.app.dashboard.runningJobs'), value: res.runningJob },
+            footer: [
+              { title: t('flink.app.dashboard.totalTask'), value: res.task.total },
+              { title: t('flink.app.dashboard.runningTask'), value: res.task.running },
+            ],
+          },
           availiableTask: {
             staticstics: {
               title: t('flink.app.dashboard.availableTaskSlots'),
@@ -40,13 +47,6 @@
             footer: [
               { title: t('flink.app.dashboard.taskSlots'), value: res.totalSlot },
               { title: t('flink.app.dashboard.taskManagers'), value: res.totalTM },
-            ],
-          },
-          runningJob: {
-            staticstics: { title: t('flink.app.dashboard.runningJobs'), value: res.runningJob },
-            footer: [
-              { title: t('flink.app.dashboard.totalTask'), value: res.task.total },
-              { title: t('flink.app.dashboard.runningTask'), value: res.task.running },
             ],
           },
           jobManager: {
@@ -83,14 +83,8 @@
   defineExpose({ handleDashboard });
 </script>
 <template>
-  <Row :gutter="24" class="dashboard">
-    <Col
-      class="gutter-row mt-10px"
-      :md="6"
-      :xs="24"
-      v-for="(value, key) in dashBigScreenMap"
-      :key="key"
-    >
+  <Row :gutter="24">
+    <Col class="gutter-row" :md="6" :xs="24" v-for="(value, key) in dashBigScreenMap" :key="key">
       <StatisticCard
         :statisticProps="value.staticstics"
         :footerList="value.footer"

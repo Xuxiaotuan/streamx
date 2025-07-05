@@ -14,11 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.streampark.common.conf
 
 import org.apache.streampark.common.enums.StorageType
 import org.apache.streampark.common.util.{HdfsUtils, SystemPropertyUtils}
-import org.apache.streampark.common.util.ImplicitsUtils._
+import org.apache.streampark.common.util.Implicits._
 
 import java.net.URI
 
@@ -109,6 +110,8 @@ case class Workspace(storageType: StorageType) {
   lazy val APP_WORKSPACE = s"$WORKSPACE/workspace"
 
   lazy val APP_FLINK = s"$WORKSPACE/flink"
+
+  lazy val APP_SPARK = s"$WORKSPACE/spark"
 
   lazy val APP_BACKUPS = s"$WORKSPACE/backups"
 

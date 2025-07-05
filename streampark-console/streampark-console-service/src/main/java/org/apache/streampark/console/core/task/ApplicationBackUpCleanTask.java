@@ -17,8 +17,8 @@
 
 package org.apache.streampark.console.core.task;
 
-import org.apache.streampark.console.core.entity.ApplicationBackUp;
-import org.apache.streampark.console.core.service.ApplicationBackUpService;
+import org.apache.streampark.console.core.entity.FlinkApplicationBackup;
+import org.apache.streampark.console.core.service.application.FlinkApplicationBackupService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,37 +31,46 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ApplicationBackUpCleanTask {
 
-  private final ApplicationBackUpService backUpService;
+    private final FlinkApplicationBackupService backUpService;
 
-  @Value("${streampark.backup-clean.max-backup-num:5}")
-  public Integer maxBackupNum;
+    @Value("${streampark.backup-clean.max-backup-num:5}")
+    public Integer maxBackupNum;
 
-  @Scheduled(cron = "${streampark.backup-clean.exec-cron:0 0 1 * * ?}")
-  public void backUpClean() {
-    log.info("Start to clean application backup");
-    // select all application backup which count > maxBackupNum group by app_id
-    backUpService.lambdaQuery().groupBy(ApplicationBackUp::getAppId)
-        .having("count(*) > " + maxBackupNum).list().stream()
-        .map(ApplicationBackUp::getAppId)
-        .forEach(
-            appId -> {
-              // order by create_time desc and skip first maxBackupNum records and delete others
-              backUpService.lambdaQuery().eq(ApplicationBackUp::getAppId, appId)
-                  .orderByDesc(ApplicationBackUp::getCreateTime).list().stream()
-                  .skip(maxBackupNum)
-                  .forEach(
-                      backUp -> {
-                        try {
-                          backUpService.removeById(backUp.getId());
-                        } catch (Exception e) {
-                          log.error(
-                              "Clean application backup failed for app id: {} , backup id: {}",
-                              appId,
-                              backUp.getId(),
-                              e);
-                        }
-                      });
-            });
-    log.info("Clean application backup finished");
-  }
+    @Scheduled(cron = "${streampark.backup-clean.exec-cron:0 0 1 * * ?}")
+    public void backUpClean() {
+        log.info("Start to clean application backup");
+        // select all application backup which count > maxBackupNum group by app_id
+        backUpService.lambdaQuery()
+            .select(FlinkApplicationBackup::getAppId)
+            .groupBy(FlinkApplicationBackup::getAppId)
+            .having("COUNT(*) > {0}", maxBackupNum)
+            .list()
+            .stream()
+            .map(FlinkApplicationBackup::getAppId)
+            .forEach(
+                appId -> {
+                    // order by create_time desc and skip first maxBackupNum records and delete
+                    // others
+                    backUpService.lambdaQuery()
+                        .eq(FlinkApplicationBackup::getAppId, appId)
+                        .orderByDesc(FlinkApplicationBackup::getCreateTime)
+                        .list()
+                        .stream()
+                        .skip(maxBackupNum)
+                        .forEach(
+                            backUp -> {
+                                try {
+                                    backUpService.removeById(
+                                        backUp.getId());
+                                } catch (Exception e) {
+                                    log.error(
+                                        "Clean application backup failed for app id: {} , backup id: {}",
+                                        appId,
+                                        backUp.getId(),
+                                        e);
+                                }
+                            });
+                });
+        log.info("Clean application backup finished");
+    }
 }

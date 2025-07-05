@@ -17,6 +17,8 @@
 
 package org.apache.streampark.console;
 
+import org.apache.streampark.console.base.config.SpringProperties;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -35,7 +37,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  *                                     /_/
  *
  *   WebSite:  https://streampark.apache.org
- *   GitHub :  https://github.com/apache/incubator-streampark
+ *   GitHub :  https://github.com/apache/streampark
  *
  *   [StreamPark] Make stream processing easier ô~ô!
  *
@@ -46,7 +48,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class StreamParkConsoleBootstrap {
 
-  public static void main(String[] args) {
-    new SpringApplicationBuilder(StreamParkConsoleBootstrap.class).run(args);
-  }
+    public static void main(String[] args) throws Exception {
+        new SpringApplicationBuilder()
+            .properties(SpringProperties.get())
+            .sources(StreamParkConsoleBootstrap.class)
+            .run(args);
+    }
 }
